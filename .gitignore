@@ -1,0 +1,12 @@
+.env
+.env.*
+gemini.config.json
+gemini.config.local.json
+node_modules/
+npm-debug.log*
+__pycache__/
+*.pyc
+*.pyo
+*.zip
+index.before-responsive.html
+test_output*.docx

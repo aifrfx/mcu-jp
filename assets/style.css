@@ -1,0 +1,349 @@
+:root{
+  --ink:#171717;
+  --muted:#666;
+  --line:#d3d3d3;
+  --panel:#f4f4f2;
+  --accent:#74202a;
+  --accent-soft:#f4e8ea;
+  --page-w:210mm;
+  --page-h:297mm;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;color:var(--ink);background:var(--panel)}
+body{font-family:Arial,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit}
+.app-shell{display:grid;grid-template-columns:420px minmax(840px,1fr);min-height:100vh}
+.form-panel{height:100vh;overflow:auto;background:#fff;border-right:1px solid var(--line);padding:20px 18px 88px;position:sticky;top:0}
+.panel-header{margin-bottom:14px}.panel-header .eyebrow{font-family:"Yu Mincho","MS Mincho",serif;font-size:12px;letter-spacing:.18em;color:#777}.panel-header h1{font-size:20px;margin:5px 0 4px;color:var(--accent)}.panel-header p{font-size:12px;color:var(--muted);margin:0;line-height:1.45}
+.record-card{border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:12px;background:#fafafa}.record-card>label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px}.record-row{display:flex;gap:6px}.record-row select{min-width:0;flex:1}.record-row.compact{margin-top:6px;flex-wrap:wrap}.record-row.compact .btn{flex:1}
+.status{font-size:11px;color:#396b45;min-height:14px;margin-top:5px}
+.btn{border:1px solid #c8c8c8;background:#fff;border-radius:6px;padding:7px 10px;cursor:pointer;font-size:12px;color:#222}.btn:hover{background:#f0f0f0}.btn:disabled{opacity:.45;cursor:not-allowed}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.primary:hover{background:#5d1821}.btn.danger{color:#9a302d;border-color:#e1b9b7}
+select,input[type=text],input[type=number],input[type=date],input[type=file],textarea{width:100%;border:1px solid #c9c9c9;border-radius:5px;padding:6px 7px;background:#fff;color:#111;font-size:12px}textarea{resize:vertical;line-height:1.35}input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}input[readonly]{background:#f2f2f2;color:#555}
+details{border:1px solid var(--line);border-radius:8px;margin-bottom:10px;background:#fff}summary{cursor:pointer;padding:9px 11px;font-size:12px;font-weight:700;color:var(--accent);user-select:none}.section-body{border-top:1px solid #e7e7e7;padding:10px}.grid{display:grid;gap:8px}.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}.field{margin-bottom:8px}.field:last-child{margin-bottom:0}.field label{display:block;font-size:10.5px;color:var(--muted);margin-bottom:3px}.check-field{display:flex;align-items:flex-end;padding-bottom:4px}.check-field label{display:flex;gap:6px;align-items:center;color:#444}.check-field input{width:auto}
+.bottom-actions{position:fixed;left:0;bottom:0;width:420px;background:#fff;border-top:1px solid var(--line);padding:12px 18px;display:flex;gap:8px;z-index:20}.bottom-actions .btn{flex:1;padding:10px}
+.preview-panel{height:100vh;overflow:auto;padding:16px 28px 48px;display:flex;flex-direction:column;align-items:center;gap:20px}
+.annotation-toolbar{position:sticky;top:0;z-index:30;width:min(var(--page-w),100%);background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:8px;padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 3px 12px rgba(0,0,0,.08)}.annotation-toolbar strong{display:block;font-size:12px;color:var(--accent)}.annotation-toolbar span{font-size:11px;color:var(--muted)}.annotation-actions{display:flex;gap:6px;flex-wrap:wrap}.print-note{font-size:11px;color:#666;margin-top:-10px}
+.page{position:relative;width:var(--page-w);height:var(--page-h);background:#fff;box-shadow:0 5px 22px rgba(0,0,0,.13);overflow:hidden;flex:0 0 auto}.page-image{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;user-select:none;pointer-events:none}.overlay{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;font-family:"Times New Roman","Yu Mincho","MS Mincho",serif;color:#111;line-height:1.22;white-space:normal}.overlay .block{white-space:pre-line}.markable{position:relative;display:inline-block;padding:0 .5mm;cursor:pointer}.markable.block{max-width:100%}.markable.is-struck{text-decoration-line:line-through;text-decoration-thickness:1.2px;text-decoration-color:#111}.markable.is-circled::after{content:"";position:absolute;left:-2.3mm;right:-2.3mm;top:-1.4mm;bottom:-1.4mm;border:.45mm solid #111;border-radius:50%;pointer-events:none}.markable.block.is-circled::after{border-radius:5mm}.markable.selected::before{content:"";position:absolute;left:-1.2mm;right:-1.2mm;top:-1mm;bottom:-1mm;border:.35mm dashed #a51e34;border-radius:2mm;pointer-events:none}.choice-line{white-space:nowrap}.jp-line{font-family:"Yu Mincho","MS Mincho",serif}.latin-line{font-family:"Times New Roman",serif}.small-line{font-size:8.4pt}.doctor-name{font-family:"Times New Roman",serif;font-size:9.2pt;text-align:center;margin-top:-2mm;background:#fff;padding:0 1mm}.p3-stamp img{max-width:100%;max-height:82%;object-fit:contain;display:none}.p3-stamp img.visible{display:block}
+/* Page 1 */
+.p1-date-jp{left:56.2%;top:71.05%;width:36.5%;height:2.65%;font-size:11.6pt;justify-content:flex-start}
+.p1-date-id{left:53.7%;top:73.55%;width:39.6%;height:2.7%;font-size:11.5pt;justify-content:flex-start}
+.p1-name{left:68.4%;top:87.4%;width:24%;height:3.1%;font-size:12.2pt}
+/* Page 2 */
+.p2-name{left:22.09%;top:16.07%;width:20.54%;height:11.42%;font-size:10.8pt}
+.p2-birth{left:55.17%;top:16.07%;width:13.94%;height:5.55%;font-size:9.5pt}
+.p2-gender{left:55.17%;top:21.98%;width:13.94%;height:5.5%;font-size:9.4pt}
+.p2-exam-date{left:80.36%;top:16.07%;width:15.73%;height:5.55%;font-size:9.5pt}
+.p2-age{left:80.36%;top:21.98%;width:15.73%;height:5.5%;font-size:9.5pt}
+.p2-work{left:22.09%;top:27.9%;width:28.45%;height:15.67%;font-size:9.8pt}
+.p2-bp{left:84.84%;top:27.9%;width:11.25%;height:3.8%;font-size:9.3pt}
+.p2-hb{left:84.84%;top:32.03%;width:11.25%;height:3.85%;font-size:9.3pt}
+.p2-rbc{left:84.84%;top:36.22%;width:11.25%;height:7.35%;font-size:9.3pt}
+.p2-history{left:22.09%;top:43.97%;width:28.45%;height:12.14%;font-size:9.6pt}
+.p2-got{left:84.84%;top:43.97%;width:11.25%;height:3.75%;font-size:9.3pt}
+.p2-gpt{left:84.84%;top:48.05%;width:11.25%;height:3.86%;font-size:9.3pt}
+.p2-ggtp{left:84.84%;top:52.24%;width:11.25%;height:3.86%;font-size:9.3pt}
+.p2-subjective{left:22.09%;top:56.49%;width:28.45%;height:12.2%;font-size:9.6pt}
+.p2-ldl{left:84.84%;top:56.49%;width:11.25%;height:3.8%;font-size:9.3pt}
+.p2-hdl{left:84.84%;top:60.62%;width:11.25%;height:3.86%;font-size:9.3pt}
+.p2-trig{left:84.84%;top:64.75%;width:11.25%;height:3.92%;font-size:9.3pt}
+.p2-objective{left:22.09%;top:69.06%;width:28.45%;height:10.55%;font-size:9.6pt}
+.p2-glucose{left:84.84%;top:69.06%;width:11.25%;height:3.8%;font-size:9.3pt;font-weight:700}
+.p2-urine-glucose{left:84.84%;top:73.2%;width:11.25%;height:3.9%;font-size:9.3pt}
+.p2-urine-protein{left:84.84%;top:77.38%;width:11.25%;height:6.3%;font-size:9.3pt}
+.p2-height{left:22.09%;top:79.9%;width:28.45%;height:3.8%;font-size:9.5pt}
+.p2-weight{left:22.09%;top:84.03%;width:28.45%;height:13.35%;font-size:9.5pt}
+.p2-ekg{left:67.0%;top:84.03%;width:29.1%;height:7.35%;font-size:9.35pt}
+.p2-other{left:67.0%;top:91.66%;width:29.1%;height:5.67%;font-size:9.5pt}
+/* Page 3 */
+.p3-bmi{left:22.09%;top:6.49%;width:28.45%;height:3.9%;font-size:9.8pt}
+.p3-waist{left:22.09%;top:10.73%;width:28.45%;height:3.9%;font-size:9.8pt}
+.p3-vision-r{left:22.09%;top:14.92%;width:28.45%;height:3.9%;font-size:10pt}
+.p3-vision-l{left:22.09%;top:19.11%;width:28.45%;height:3.9%;font-size:10pt}
+.p3-hearing-r{left:22.09%;top:23.3%;width:28.45%;height:7.35%;font-size:8.85pt;text-align:left;justify-content:flex-start;padding-left:1.2mm}
+.p3-hearing-l{left:22.09%;top:30.96%;width:28.45%;height:7.23%;font-size:8.85pt;text-align:left;justify-content:flex-start;padding-left:1.2mm}
+.p3-xray{left:22.09%;top:38.57%;width:28.45%;height:12.94%;font-size:8.75pt;text-align:left;justify-content:flex-start;padding-left:1.2mm}
+.p3-diagnosis{left:50.94%;top:10.68%;width:45.16%;height:21.48%;font-size:9.3pt;align-items:flex-start;justify-content:flex-start;text-align:left;padding:2.2mm 4mm}
+.p3-notes{left:50.94%;top:40.82%;width:45.16%;height:10.67%;font-size:9.3pt}
+.p3-footer-date{left:22.5%;top:88.23%;width:34%;height:4.15%;font-size:9.7pt;text-align:left;justify-content:flex-start}
+.p3-stamp{left:70.8%;top:86.6%;width:26.5%;height:12.7%;display:flex;flex-direction:column;justify-content:flex-end}
+.hearing-value{width:100%;line-height:1.36}.xray-value{width:100%;line-height:1.42}.diagnosis-value{width:100%;height:100%;position:relative}.diagnosis-text{white-space:pre-line;line-height:1.35;min-height:23mm}.fit-row{display:grid;grid-template-columns:28mm 1fr 1fr;align-items:center;margin-top:7mm;text-align:center}.fit-label{text-align:left;font-family:"Yu Mincho","MS Mincho",serif;line-height:1.15}.fit-choice{font-weight:700;font-size:10pt;line-height:1.05}.fit-note{text-align:center;margin-top:7mm;font-family:"Yu Mincho","MS Mincho",serif;font-size:9.3pt}.xray-methods{display:grid;grid-template-columns:1fr 1fr;text-align:center;margin-bottom:1mm}.xray-row{display:grid;grid-template-columns:29mm 1fr;gap:1mm}.xray-findings{margin-top:1mm;white-space:pre-line}.footer-date-line{white-space:nowrap;line-height:1.45}
+@media(max-width:1180px){.app-shell{grid-template-columns:380px minmax(820px,1fr)}.form-panel{padding-left:14px;padding-right:14px}.bottom-actions{width:380px}.preview-panel{align-items:flex-start}}
+@media(max-width:900px){.app-shell{display:block}.form-panel{position:relative;height:auto;max-height:none;border-right:0}.bottom-actions{position:sticky;width:auto;margin:0 -18px -88px}.preview-panel{height:auto;overflow:visible;align-items:flex-start}.annotation-toolbar{position:sticky}.grid.three{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media print{
+  @page{size:A4 portrait;margin:0}
+  html,body{background:#fff!important;width:210mm;margin:0!important;padding:0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .form-panel,.annotation-toolbar,.print-note,.preview-topbar{display:none!important}
+  .app-shell,.preview-panel{display:block!important;width:210mm!important;height:auto!important;overflow:visible!important;padding:0!important;margin:0!important;background:#fff!important}
+  .page{display:block!important;width:210mm!important;height:297mm!important;min-height:297mm!important;max-height:297mm!important;box-shadow:none!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:#fff!important;overflow:hidden!important;break-after:page;page-break-after:always;break-inside:avoid;page-break-inside:avoid}
+  .page:last-child{break-after:auto;page-break-after:auto}
+  .page-image{background:#fff!important}
+  .markable{cursor:default}.markable.selected::before{display:none}
+}
+/* Context-specific annotation proportions */
+.p2-gender .markable.is-circled::after,
+.hearing-value .markable.is-circled::after{
+  left:-1.05mm;right:-1.05mm;top:-.55mm;bottom:-.55mm;border-width:.35mm;
+}
+.fit-combined{line-height:1.05;padding:.2mm 1.2mm}
+.fit-combined.is-circled::after{left:-3.1mm;right:-3.1mm;top:-1.5mm;bottom:-1.5mm;border-width:.4mm}
+.doctor-name{white-space:pre-line;line-height:1.25}
+.xray-row{grid-template-columns:24mm 1fr}
+
+
+/* ============================================================
+   Layout Word terbaru. Koordinat diambil dari render DOCX asli
+   berukuran 1407 x 1997 px. Semua nilai menutup data contoh pada
+   dokumen Word, sedangkan garis, label, font, dan tabel berasal
+   langsung dari render Word terbaru.
+   ============================================================ */
+.page-image{object-fit:fill!important}
+.overlay{
+  background:#fff;
+  box-sizing:border-box;
+  overflow:hidden;
+  padding:1px 2px;
+  z-index:2;
+}
+.p1-date-jp{left:39.2324%;top:68.8533%;width:44.9893%;height:2.4036%;font-size:13pt;justify-content:flex-start;padding-left:0}
+.p1-date-id{left:39.2324%;top:71.3070%;width:52.4520%;height:2.4036%;font-size:13pt;justify-content:flex-start;padding-left:0}
+.p1-name{left:69.2964%;top:86.3796%;width:19.5451%;height:2.3535%;font-size:12pt;justify-content:center}
+
+.p2-name{left:21.8905%;top:18.2774%;width:20.8955%;height:11.0165%;font-size:10.2pt}
+.p2-birth{left:54.9396%;top:18.2774%;width:14.2857%;height:5.0576%;font-size:9.6pt}
+.p2-gender{left:54.9396%;top:23.4352%;width:14.2857%;height:5.8588%;font-size:9.5pt}
+.p2-exam-date{left:80.1706%;top:18.2774%;width:15.9915%;height:5.0576%;font-size:9.6pt}
+.p2-age{left:80.1706%;top:23.4352%;width:15.9915%;height:5.8588%;font-size:9.6pt}
+.p2-work{left:21.8905%;top:29.3941%;width:28.7136%;height:13.0195%;font-size:9.7pt}
+.p2-bp{left:84.5771%;top:29.3941%;width:11.5849%;height:4.0561%;font-size:9.2pt}
+.p2-hb{left:84.5771%;top:33.5503%;width:11.5849%;height:5.0576%;font-size:9.2pt}
+.p2-rbc{left:84.5771%;top:38.7081%;width:11.5849%;height:3.7056%;font-size:9.2pt}
+.p2-history{left:21.8905%;top:42.5138%;width:28.7136%;height:8.9134%;font-size:9.5pt}
+.p2-got{left:84.5771%;top:42.5138%;width:11.5849%;height:2.6540%;font-size:9.1pt}
+.p2-gpt{left:84.5771%;top:45.2679%;width:11.5849%;height:2.8042%;font-size:9.1pt}
+.p2-ggtp{left:84.5771%;top:48.1723%;width:11.5849%;height:3.2549%;font-size:9.1pt}
+.p2-subjective{left:21.8905%;top:51.5273%;width:28.7136%;height:14.4717%;font-size:9.5pt}
+.p2-ldl{left:84.5771%;top:51.5273%;width:11.5849%;height:6.0591%;font-size:9.1pt}
+.p2-hdl{left:84.5771%;top:57.6865%;width:11.5849%;height:4.0561%;font-size:9.1pt}
+.p2-trig{left:84.5771%;top:61.8428%;width:11.5849%;height:4.1562%;font-size:9.1pt}
+.p2-objective{left:21.8905%;top:66.0991%;width:28.7136%;height:12.6189%;font-size:9.5pt}
+.p2-glucose{left:84.5771%;top:66.0991%;width:11.5849%;height:5.9089%;font-size:9.2pt;font-weight:700}
+.p2-urine-glucose{left:84.5771%;top:72.1082%;width:11.5849%;height:4.1562%;font-size:9.1pt}
+.p2-urine-protein{left:84.5771%;top:76.3645%;width:11.5849%;height:6.5098%;font-size:9.1pt}
+.p2-height{left:21.8905%;top:78.8182%;width:28.7136%;height:4.0561%;font-size:9.4pt}
+.p2-weight{left:21.8905%;top:82.9745%;width:28.7136%;height:11.9179%;font-size:9.4pt}
+.p2-ekg{left:61.2651%;top:82.9745%;width:34.8969%;height:7.5613%;font-size:9.25pt}
+.p2-other{left:61.2651%;top:90.6360%;width:34.8969%;height:4.2564%;font-size:9.25pt}
+
+.p3-bmi{left:21.8905%;top:6.4096%;width:28.7136%;height:4.1562%;font-size:9.6pt}
+.p3-waist{left:21.8905%;top:10.6660%;width:28.7136%;height:4.1062%;font-size:9.6pt}
+.p3-vision-r{left:21.8905%;top:14.8723%;width:28.7136%;height:4.0060%;font-size:9.8pt}
+.p3-vision-l{left:21.8905%;top:18.9785%;width:28.7136%;height:4.1562%;font-size:9.8pt}
+.p3-hearing-r{left:21.8905%;top:23.2349%;width:28.7136%;height:7.5113%;font-size:8.7pt;text-align:left;justify-content:flex-start;padding-left:4px}
+.p3-hearing-l{left:21.8905%;top:30.8463%;width:28.7136%;height:6.7601%;font-size:8.7pt;text-align:left;justify-content:flex-start;padding-left:4px}
+.p3-xray{left:21.8905%;top:37.7066%;width:28.7136%;height:11.6174%;font-size:8.5pt;text-align:left;justify-content:flex-start;padding:4px}
+.p3-diagnosis{left:50.7463%;top:10.6660%;width:45.4869%;height:20.8312%;font-size:9.2pt;align-items:flex-start;justify-content:flex-start;text-align:left;padding:8px 14px}
+.p3-notes{left:50.7463%;top:39.4592%;width:45.4869%;height:9.8648%;font-size:9.2pt}
+.p3-footer-date{left:22.8856%;top:82.8743%;width:33.9730%;height:3.2549%;font-size:9.5pt;text-align:left;justify-content:flex-start;padding:0}
+.p3-stamp{left:63.9659%;top:84.6269%;width:29.8507%;height:8.5128%;background:#fff}
+
+.p2-work,.p2-history,.p2-subjective,.p2-objective,.p2-weight{padding:5px 8px}
+.p2-name,.p2-birth,.p2-gender,.p2-exam-date,.p2-age,.p2-bp,.p2-hb,.p2-rbc,.p2-got,.p2-gpt,.p2-ggtp,.p2-ldl,.p2-hdl,.p2-trig,.p2-glucose,.p2-urine-glucose,.p2-urine-protein,.p2-height,.p2-ekg,.p2-other,.p3-bmi,.p3-waist,.p3-vision-r,.p3-vision-l,.p3-notes{padding:3px 5px}
+.fit-row{margin-top:12mm}
+.fit-note{margin-top:7mm}
+.doctor-name{background:#fff}
+
+/* Page 1 value column alignment correction */
+.p1-date-jp{left:53.8024%;width:36.3895%;}
+.p1-date-id{left:53.8024%;width:38.7349%;}
+
+/* Toolbar tidak menutupi bagian atas halaman Word */
+.annotation-toolbar{position:relative!important;top:auto!important;}
+
+
+
+
+/* ===== Revisi stabil: cap lebih besar dan tombol Word ===== */
+.form-panel{padding-bottom:138px;}
+.bottom-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.bottom-actions #btnExportWord{grid-column:1 / -1;}
+.action-word{background:#fff8ef;border-color:#dfbe82;color:#7a5210;}
+.action-word:hover{background:#fff0d1;}
+.p3-stamp{left:62.9%!important;top:83.9%!important;width:31.3%!important;height:10.1%!important;}
+.p3-stamp img{max-width:100%!important;max-height:94%!important;object-fit:contain!important;object-position:right bottom!important;}
+@media(max-width:900px){.form-panel{padding-bottom:20px}.bottom-actions{grid-template-columns:1fr 1fr;margin-bottom:0}.bottom-actions #btnExportWord{grid-column:1 / -1}}
+
+
+/* ===== Fix halaman 2: EKG dan Pemeriksaan lainnya =====
+   Batas kolom asli pada template berada di x=938/1407 = 66.67%.
+   Posisi lama 61.26% menutup label, garis pemisah, dan sebagian teks. */
+.p2-ekg,
+.p2-other{
+  left:66.67%!important;
+  width:29.50%!important;
+  overflow:hidden!important;
+  box-sizing:border-box!important;
+  padding:3px 7px!important;
+  background:#fff!important;
+}
+.p2-ekg{
+  top:82.9745%!important;
+  height:7.6615%!important;
+  font-size:9.05pt!important;
+  line-height:1.18!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+.p2-ekg .block{
+  white-space:pre-line!important;
+  line-height:1.18!important;
+  max-width:100%!important;
+}
+.p2-other{
+  top:90.6360%!important;
+  height:4.3065%!important;
+  font-size:9.15pt!important;
+  line-height:1.18!important;
+  border-top:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+
+
+/* ===== FINAL: garis tabel tunggal dan seragam ===== */
+.tablegrid{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:80;}
+.tablegrid line{stroke:#111;stroke-width:1.2;shape-rendering:crispEdges;vector-effect:non-scaling-stroke;stroke-linecap:square;}
+.page-image{z-index:1;}
+.overlay{z-index:20;}
+.p2-other{border-top:none!important;}
+.gridline,.gridline-v{display:none!important;}
+@media print{.tablegrid{z-index:80!important}.tablegrid line{stroke:#111;stroke-width:1.2;}}
+
+
+/* Permanent fix: no underline/strike/circle on Latin gender labels */
+.p2-gender [data-mark-key="gender-male-id"],
+.p2-gender [data-mark-key="gender-female-id"],
+.p2-gender [data-mark-key="gender-male-id"].is-struck,
+.p2-gender [data-mark-key="gender-female-id"].is-struck{
+  text-decoration:none!important;
+  border-bottom:0!important;
+  box-shadow:none!important;
+}
+.p2-gender [data-mark-key="gender-male-id"]::after,
+.p2-gender [data-mark-key="gender-female-id"]::after{display:none!important;}
+
+
+/* ===== Final non-clipping rebuild for Japanese note 1 on page 3 ===== */
+.p3-note-first-html{
+  position:absolute;
+  left:4.25%;
+  top:49.78%;
+  width:91.2%;
+  height:4.55%;
+  z-index:120;
+  color:#111;
+  font-family:"Times New Roman","Yu Mincho","MS Mincho",serif;
+  pointer-events:none;
+  overflow:visible;
+}
+.p3-note-first-label{
+  margin-left:1.5%;
+  font-family:"Yu Mincho","MS Mincho",serif;
+  font-size:8.4pt;
+  line-height:1.15;
+  white-space:nowrap;
+}
+.p3-note-first-row{
+  display:flex;
+  align-items:center;
+  width:100%;
+  margin-top:4px;
+  font-size:10.1pt;
+  line-height:1.15;
+  white-space:nowrap;
+}
+.p3-note-first-no{
+  flex:0 0 22px;
+  width:22px;
+  text-align:left;
+}
+.p3-note-first-text{
+  flex:0 0 auto;
+  font-family:"Yu Mincho","MS Mincho",serif;
+}
+.p3-note-first-formula{
+  margin-left:auto;
+  margin-right:12.5%;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  font-size:11.8pt;
+  line-height:1;
+}
+.p3-note-first-formula .eq{padding:0 2px;}
+.p3-note-first-formula .fraction{
+  display:inline-flex;
+  flex-direction:column;
+  align-items:center;
+  line-height:1.02;
+}
+.p3-note-first-formula .numerator{
+  border-bottom:1px solid #111;
+  padding:0 7px 2px;
+}
+.p3-note-first-formula .denominator{padding-top:2px;}
+.p3-note-first-formula sup{font-size:.64em;vertical-align:super;}
+@media print{
+  .p3-note-first-html{display:block!important;z-index:120!important;}
+}
+
+
+/* ===== Precise page 3 note alignment =====
+   Table bottom: 988/1997 = 49.474%. The note starts just below it.
+   Formula uses a fixed position so it cannot drift to the far right. */
+.p3-note-first-html{
+  top:49.50%!important;
+  height:4.10%!important;
+  overflow:visible!important;
+}
+.p3-note-first-label{
+  position:absolute!important;
+  left:1.45%!important;
+  top:2px!important;
+  margin:0!important;
+  font-size:8.2pt!important;
+  line-height:1!important;
+}
+.p3-note-first-row{
+  position:absolute!important;
+  left:0!important;
+  right:0!important;
+  top:15px!important;
+  width:100%!important;
+  margin:0!important;
+  display:flex!important;
+  align-items:center!important;
+  font-size:9.75pt!important;
+  line-height:1.05!important;
+  white-space:nowrap!important;
+}
+.p3-note-first-no{
+  flex:0 0 22px!important;
+  width:22px!important;
+}
+.p3-note-first-text{
+  flex:0 0 auto!important;
+}
+.p3-note-first-formula{
+  position:absolute!important;
+  left:47.2%!important;
+  top:-7px!important;
+  margin:0!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:4px!important;
+  font-size:10.9pt!important;
+  line-height:1!important;
+}
+.p3-note-first-formula .eq{padding:0 1px!important;}
+.p3-note-first-formula .numerator{padding:0 6px 1px!important;}
+.p3-note-first-formula .denominator{padding-top:1px!important;}

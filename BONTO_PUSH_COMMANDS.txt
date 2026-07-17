@@ -1,0 +1,30 @@
+PUSH KE GITHUB
+==============
+
+git init
+git branch -M main
+git add .
+git commit -m "Deploy MCU Node.js to Bonto"
+git remote add origin https://github.com/aifrfx/mcu-jp.git
+git push -u origin main
+
+Jika origin sudah ada:
+
+git remote set-url origin https://github.com/aifrfx/mcu-jp.git
+git pull --rebase origin main
+git push origin main
+
+PUSH LANGSUNG KE BONTO
+======================
+
+Salin Git URL dari Settings Bonto, lalu:
+
+git remote add bonto https://api.bonto.dev/git/NAMA-APP
+git push bonto main:master
+
+ENVIRONMENT BONTO
+=================
+
+GEMINI_API_KEY=API_KEY_GEMINI_BARU
+GEMINI_PRIMARY_MODEL=gemini-2.5-flash
+GEMINI_FALLBACK_MODELS=gemini-2.5-flash-lite,gemini-2.0-flash

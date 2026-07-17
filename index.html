@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; connect-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <title>Generator MCU - Layout Word Presisi</title>
+  <link rel="stylesheet" href="assets/style.css?v=40">
+  <link rel="stylesheet" href="assets/modern.css?v=7">
+  <link rel="stylesheet" href="assets/document-font-match.css?v=7">
+  <link rel="stylesheet" href="assets/scan.css?v=2">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="form-panel">
+    <header class="panel-header">
+      <div class="brand-lockup">
+        <div class="brand-mark" aria-hidden="true"><span></span></div>
+        <div class="brand-copy">
+          <div class="eyebrow">健康診断個人票</div>
+          <h1>MCU Document Studio</h1>
+          <p>Isi data pemeriksaan. Output mengikuti layout Word terbaru secara presisi dan siap dicetak.</p>
+        </div>
+      </div>
+      <div class="feature-chips" aria-label="Fitur utama">
+        <span>3 halaman</span>
+        <span>Auto BMI</span>
+        <span>Penandaan</span>
+      </div>
+    </header>
+
+    <section class="record-card">
+      <div class="card-heading">
+        <span class="card-kicker">DATA PESERTA</span>
+        <strong>Manajemen rekam MCU</strong>
+        <small>Tersimpan secara lokal pada browser perangkat ini.</small>
+      </div>
+      <label for="recordSelect">Pilih peserta tersimpan</label>
+      <div class="record-row">
+        <select id="recordSelect"><option value="">Peserta baru</option></select>
+        <button type="button" class="btn" id="btnLoad">Buka</button>
+      </div>
+      <div class="record-row compact">
+        <button type="button" class="btn" id="btnNew">Peserta baru</button>
+        <button type="button" class="btn" id="btnSample">Muat contoh PDF</button>
+        <button type="button" class="btn danger" id="btnDelete">Hapus</button>
+      </div>
+      <div class="status" id="statusMsg" aria-live="polite"></div>
+    </section>
+
+
+    <section class="scan-card" aria-label="Scan PDF atau gambar">
+      <div class="scan-heading">
+        <div>
+          <span class="card-kicker">SCAN DOKUMEN</span>
+          <strong>Scan PDF atau gambar</strong>
+          <small>Batch scan PDF dan gambar menggunakan Gemini API dari backend Railway. API key tidak pernah ditampilkan di dashboard.</small>
+        </div>
+        <span class="scan-badge gemini">Gemini Railway</span>
+      </div>
+      <div class="scan-body">
+        <label class="scan-dropzone" id="scanDropzone" for="scanFilesInput">
+          <input id="scanFilesInput" type="file" accept=".pdf,image/*" multiple>
+          <strong>Pilih atau jatuhkan PDF/gambar di sini</strong>
+          <span>Mendukung PDF, JPG, JPEG, PNG, WEBP, dan BMP. Maksimal 30 file.</span>
+        </label>
+        <div class="scan-files" id="scanFileList">Belum ada file dipilih.</div>
+
+        <div class="scan-server-note" id="geminiServerNote">
+          <strong>Gemini dari server Railway</strong>
+          <small id="geminiConfigHint">API key tidak ditampilkan di dashboard. Sistem membaca API key dan urutan model otomatis dari environment variables Railway.</small>
+          <small id="geminiFallbackHint">Model aktif akan dimuat dari server.</small>
+        </div>
+
+        <div class="scan-options">
+          <div class="field">
+            <label for="scanMode">Metode analisis</label>
+            <select id="scanMode">
+              <option value="gemini">Gemini API dari Railway</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="scanGrouping">Mode batch</label>
+            <select id="scanGrouping">
+              <option value="single">Setiap file = 1 peserta</option>
+              <option value="image3">Setiap 3 gambar = 1 peserta, PDF tetap sendiri</option>
+              <option value="all">Semua file digabung = 1 peserta</option>
+            </select>
+          </div>
+          <div class="scan-check">
+            <label><input id="scanOverwrite" type="checkbox" checked> Timpa data lama atau data contoh</label>
+          </div>
+        </div>
+        <div class="scan-actions">
+          <button type="button" class="btn primary" id="btnAnalyzeScan">Analisis batch dan isi otomatis</button>
+          <button type="button" class="btn" id="btnClearScan">Bersihkan</button>
+        </div>
+        <div class="scan-progress-wrap">
+          <progress id="scanProgress" max="100" value="0">0%</progress>
+          <div class="scan-status" id="scanStatus" aria-live="polite"></div>
+        </div>
+        <div class="scan-warning" id="scanProtocolWarning" hidden>
+          Fitur scan hanya berjalan melalui domain Railway atau server Python, bukan saat index.html dibuka langsung dari folder.
+        </div>
+      </div>
+      <div class="batch-results" id="batchResults" hidden>
+        <div class="batch-results-head">
+          <div><strong>Hasil batch</strong><br><span id="batchSummary">0 peserta</span></div>
+          <button type="button" class="btn" id="btnSaveAllBatch">Simpan semua ke daftar peserta</button>
+        </div>
+        <div class="batch-list" id="batchList"></div>
+      </div>
+      <div class="scan-results" id="scanResults" hidden>
+        <div class="scan-summary">
+          <div><strong>Hasil pemetaan</strong><br><span id="scanResultCount">0 data terdeteksi</span></div>
+          <button type="button" class="btn" id="btnApplyDetected">Terapkan ulang</button>
+        </div>
+        <div class="scan-table-wrap">
+          <table class="scan-table">
+            <thead><tr><th>Kolom</th><th>Nilai terdeteksi</th><th>Keyakinan</th></tr></thead>
+            <tbody id="scanResultBody"></tbody>
+          </table>
+        </div>
+        <details class="scan-raw">
+          <summary>Lihat dan koreksi teks hasil pembacaan</summary>
+          <textarea id="scanRawText" spellcheck="false"></textarea>
+          <div class="scan-raw-actions"><button type="button" class="btn" id="btnParseRaw">Petakan ulang teks</button></div>
+        </details>
+      </div>
+    </section>
+
+    <section class="progress-card" aria-label="Kelengkapan data">
+      <div class="progress-heading">
+        <div>
+          <span class="card-kicker">KELENGKAPAN</span>
+          <strong>Data pemeriksaan</strong>
+        </div>
+        <span class="progress-percent" id="progressPercent">0%</span>
+      </div>
+      <progress id="formProgress" max="100" value="0">0%</progress>
+      <div class="progress-caption" id="progressCaption">Belum ada data wajib yang terisi.</div>
+    </section>
+
+    <div class="form-section-label">
+      <span>FORMULIR INPUT</span>
+      <small>Bagian dapat dibuka dan ditutup.</small>
+    </div>
+
+    <form id="mcuForm" autocomplete="off">
+      <details open>
+        <summary><span class="summary-title"><span class="section-number">01</span>Identitas</span><span class="summary-hint">Data dasar</span></summary>
+        <div class="section-body">
+          <div class="field full"><label for="nama">Nama lengkap</label><input id="nama" data-field type="text" placeholder="AHMAD FADHOLI"></div>
+          <div class="grid two">
+            <div class="field"><label for="tglLahir">Tanggal lahir</label><input id="tglLahir" data-field type="date"></div>
+            <div class="field"><label for="jenisKelamin">Jenis kelamin</label><select id="jenisKelamin" data-field><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div>
+            <div class="field"><label for="tglPeriksa">Tanggal periksa</label><input id="tglPeriksa" data-field type="date"></div>
+            <div class="field"><label for="usiaDisplay">Usia otomatis</label><input id="usiaDisplay" type="text" readonly></div>
+            <div class="field"><label for="tglDeklarasi">Tanggal deklarasi halaman 1</label><input id="tglDeklarasi" data-field type="date"></div>
+          </div>
+        </div>
+      </details>
+
+      <details open>
+        <summary><span class="summary-title"><span class="section-number">02</span>Riwayat dan gejala</span><span class="summary-hint">Anamnesis</span></summary>
+        <div class="section-body">
+          <div class="field"><label for="riwayatKerjaId">Riwayat kerja atau paparan</label><textarea id="riwayatKerjaId" data-field rows="3"></textarea></div>
+          <div class="field"><label for="riwayatKerjaJp">Riwayat kerja versi Jepang, opsional</label><textarea id="riwayatKerjaJp" data-field rows="2"></textarea></div>
+          <div class="field"><label for="riwayatSakitId">Riwayat kesehatan sebelumnya</label><textarea id="riwayatSakitId" data-field rows="2"></textarea></div>
+          <div class="field"><label for="riwayatSakitJp">Riwayat sebelumnya versi Jepang</label><textarea id="riwayatSakitJp" data-field rows="2"></textarea></div>
+          <div class="grid two">
+            <div class="field"><label for="gejalaSubId">Gejala subjektif</label><textarea id="gejalaSubId" data-field rows="2"></textarea></div>
+            <div class="field"><label for="gejalaSubJp">Versi Jepang</label><textarea id="gejalaSubJp" data-field rows="2"></textarea></div>
+            <div class="field"><label for="gejalaObjId">Gejala objektif</label><textarea id="gejalaObjId" data-field rows="2"></textarea></div>
+            <div class="field"><label for="gejalaObjJp">Versi Jepang</label><textarea id="gejalaObjJp" data-field rows="2"></textarea></div>
+          </div>
+        </div>
+      </details>
+
+      <details open>
+        <summary><span class="summary-title"><span class="section-number">03</span>Antropometri dan tanda vital</span><span class="summary-hint">Pengukuran</span></summary>
+        <div class="section-body">
+          <div class="grid three">
+            <div class="field"><label for="tinggi">Tinggi, cm</label><input id="tinggi" data-field type="number" step="0.1"></div>
+            <div class="field"><label for="berat">Berat, kg</label><input id="berat" data-field type="number" step="0.1"></div>
+            <div class="field"><label for="lingkarPerut">Lingkar perut, cm</label><input id="lingkarPerut" data-field type="number" step="0.1"></div>
+          </div>
+          <div class="grid two">
+            <div class="field"><label for="bmiDisplay">BMI otomatis</label><input id="bmiDisplay" type="text" readonly></div>
+            <div class="field"><label for="tekananDarah">Tekanan darah</label><input id="tekananDarah" data-field type="text" placeholder="130/80"></div>
+          </div>
+        </div>
+      </details>
+
+      <details open>
+        <summary><span class="summary-title"><span class="section-number">04</span>Pemeriksaan laboratorium</span><span class="summary-hint">Darah dan urine</span></summary>
+        <div class="section-body">
+          <div class="grid two">
+            <div class="field"><label for="hb">Hemoglobin, g/dℓ</label><input id="hb" data-field type="text"></div>
+            <div class="field"><label for="rbc">Sel darah merah, 万/mm³</label><input id="rbc" data-field type="text"></div>
+          </div>
+          <div class="grid three">
+            <div class="field"><label for="got">GOT</label><input id="got" data-field type="text"></div>
+            <div class="field"><label for="gpt">GPT</label><input id="gpt" data-field type="text"></div>
+            <div class="field"><label for="ggtp">γ-GTP</label><input id="ggtp" data-field type="text"></div>
+            <div class="field"><label for="ldl">LDL</label><input id="ldl" data-field type="text"></div>
+            <div class="field"><label for="hdl">HDL</label><input id="hdl" data-field type="text"></div>
+            <div class="field"><label for="trigliserida">Trigliserida</label><input id="trigliserida" data-field type="text"></div>
+          </div>
+          <div class="grid three">
+            <div class="field"><label for="gulaDarah">Gula darah</label><input id="gulaDarah" data-field type="text"></div>
+            <div class="field check-field"><label><input id="gulaDarahBintang" data-field type="checkbox"> Tambahkan tanda *</label></div>
+            <div></div>
+            <div class="field"><label for="glukosaUrine">Glukosa urine</label><select id="glukosaUrine" data-field><option value="Negatif">Negatif</option><option value="Positif">Positif</option></select></div>
+            <div class="field"><label for="proteinUrine">Protein urine</label><select id="proteinUrine" data-field><option value="Negatif">Negatif</option><option value="Positif">Positif</option></select></div>
+          </div>
+        </div>
+      </details>
+
+      <details>
+        <summary><span class="summary-title"><span class="section-number">05</span>Mata dan pendengaran</span><span class="summary-hint">Fungsi sensorik</span></summary>
+        <div class="section-body">
+          <div class="grid two">
+            <div class="field"><label for="mataKanan">Daya pandang kanan</label><input id="mataKanan" data-field type="text"></div>
+            <div class="field"><label for="mataKiri">Daya pandang kiri</label><input id="mataKiri" data-field type="text"></div>
+          </div>
+          <div class="field check-field"><label><input id="alatBantuMata" data-field type="checkbox"> Menggunakan alat bantu penglihatan</label></div>
+          <div class="grid two">
+            <div class="field"><label for="telingaKanan1000">Kanan 1.000 Hz</label><select id="telingaKanan1000" data-field><option>Normal</option><option>Gangguan</option></select></div>
+            <div class="field"><label for="telingaKanan4000">Kanan 4.000 Hz</label><select id="telingaKanan4000" data-field><option>Normal</option><option>Gangguan</option></select></div>
+            <div class="field"><label for="telingaKiri1000">Kiri 1.000 Hz</label><select id="telingaKiri1000" data-field><option>Normal</option><option>Gangguan</option></select></div>
+            <div class="field"><label for="telingaKiri4000">Kiri 4.000 Hz</label><select id="telingaKiri4000" data-field><option>Normal</option><option>Gangguan</option></select></div>
+          </div>
+        </div>
+      </details>
+
+      <details>
+        <summary><span class="summary-title"><span class="section-number">06</span>EKG dan rontgen dada</span><span class="summary-hint">Pemeriksaan penunjang</span></summary>
+        <div class="section-body">
+          <div class="grid two">
+            <div class="field"><label for="ekgId">Hasil EKG</label><textarea id="ekgId" data-field rows="2"></textarea></div>
+            <div class="field"><label for="ekgJp">Hasil EKG versi Jepang</label><textarea id="ekgJp" data-field rows="2"></textarea></div>
+            <div class="field"><label for="pemeriksaanLainId">Pemeriksaan lainnya</label><input id="pemeriksaanLainId" data-field type="text"></div>
+            <div class="field"><label for="pemeriksaanLainJp">Versi Jepang</label><input id="pemeriksaanLainJp" data-field type="text"></div>
+          </div>
+          <div class="grid two">
+            <div class="field"><label for="rontgenMetode">Metode rontgen</label><select id="rontgenMetode" data-field><option value="Langsung">Langsung</option><option value="Tidak langsung">Tidak langsung</option></select></div>
+            <div class="field"><label for="rontgenTanggal">Tanggal diambil</label><input id="rontgenTanggal" data-field type="date"></div>
+            <div class="field"><label for="rontgenNo">Nomor film</label><input id="rontgenNo" data-field type="text"></div>
+            <div class="field"><label for="rontgenTemuanId">Temuan Indonesia</label><input id="rontgenTemuanId" data-field type="text"></div>
+          </div>
+          <div class="field"><label for="rontgenTemuanJp">Temuan Jepang</label><input id="rontgenTemuanJp" data-field type="text"></div>
+        </div>
+      </details>
+
+      <details open>
+        <summary><span class="summary-title"><span class="section-number">07</span>Diagnosis dan keterangan</span><span class="summary-hint">Kesimpulan medis</span></summary>
+        <div class="section-body">
+          <div class="field"><label for="diagnosisId">Diagnosis dokter Indonesia</label><textarea id="diagnosisId" data-field rows="3"></textarea></div>
+          <div class="field"><label for="diagnosisJp">Diagnosis dokter Jepang</label><textarea id="diagnosisJp" data-field rows="2"></textarea></div>
+          <div class="field"><label for="fitStatus">Penetapan</label><select id="fitStatus" data-field><option value="FIT">FIT</option><option value="UNFIT">UNFIT</option></select></div>
+          <div class="grid two">
+            <div class="field"><label for="keteranganId">Keterangan Indonesia</label><textarea id="keteranganId" data-field rows="2"></textarea></div>
+            <div class="field"><label for="keteranganJp">Keterangan Jepang</label><textarea id="keteranganJp" data-field rows="2"></textarea></div>
+          </div>
+        </div>
+      </details>
+
+      <details>
+        <summary><span class="summary-title"><span class="section-number">08</span>Tanggal dan pengesahan</span><span class="summary-hint">Dokter dan cap</span></summary>
+        <div class="section-body">
+          <div class="grid two">
+            <div class="field"><label for="tglDokumen">Tanggal pembuatan dokumen</label><input id="tglDokumen" data-field type="date"></div>
+            <div class="field"><label for="dokterNama">Nama dokter</label><input id="dokterNama" data-field type="text"></div>
+          </div>
+          <div class="field"><label for="klinikNama">Nama klinik atau laboratorium</label><input id="klinikNama" data-field type="text"></div>
+          <div class="field"><label for="dokterStamp">Gambar cap dan tanda tangan dokter</label><input id="dokterStamp" type="file" accept="image/png,image/jpeg,image/webp"></div>
+          <div class="record-row compact">
+            <button type="button" class="btn" id="btnSampleStamp">Gunakan cap dari contoh PDF</button>
+            <button type="button" class="btn" id="btnClearStamp">Hapus gambar cap</button>
+          </div>
+        </div>
+      </details>
+    </form>
+
+    <div class="bottom-actions">
+      <button type="button" class="btn primary action-save" id="btnSave"><span class="button-symbol">✓</span>Simpan data</button>
+      <button type="button" class="btn action-print" id="btnPrint"><span class="button-symbol">⇩</span>Cetak / PDF</button>
+      <button type="button" class="btn action-word" id="btnExportWord"><span class="button-symbol">W</span>Export Word (.docx)</button>
+    </div>
+  </aside>
+
+  <main class="preview-panel">
+    <div class="preview-topbar">
+      <div class="preview-heading">
+        <span class="live-indicator" aria-hidden="true"></span>
+        <div>
+          <strong>Pratinjau dokumen langsung</strong>
+          <span>Format Referensi 1-3 • A4 • 3 halaman</span>
+        </div>
+      </div>
+      <nav class="page-navigation" aria-label="Navigasi halaman pratinjau">
+        <button type="button" class="page-nav-btn active" data-page-target="page1">01</button>
+        <button type="button" class="page-nav-btn" data-page-target="page2">02</button>
+        <button type="button" class="page-nav-btn" data-page-target="page3">03</button>
+      </nav>
+    </div>
+
+    <div class="annotation-toolbar">
+      <div>
+        <strong>Penandaan data</strong>
+        <span id="selectedMarkLabel">Klik data pada halaman pratinjau.</span>
+      </div>
+      <div class="annotation-actions">
+        <button type="button" class="btn" id="btnStrike" disabled>Coret tulisan</button>
+        <button type="button" class="btn" id="btnCircle" disabled>Lingkari</button>
+        <button type="button" class="btn" id="btnClearMark" disabled>Hapus tanda</button>
+      </div>
+    </div>
+
+    <div class="print-note"><span class="tip-icon">i</span><span>Saat mencetak, gunakan skala 100%, margin none, serta nonaktifkan header dan footer browser.</span></div>
+
+    <div class="page" id="page1" data-page-label="Halaman 1">
+      <img class="page-image" src="assets/template-page-1.png?v=21" alt="Halaman 1 formulir MCU">
+      <div class="overlay p1-date-jp"><span class="markable" data-mark-key="doc-date-jp" data-mark-label="Tanggal pembuatan Jepang" id="outP1DateJp"></span></div>
+      <div class="overlay p1-date-id"><span class="markable" data-mark-key="doc-date-id" data-mark-label="Tanggal pembuatan Indonesia" id="outP1DateId"></span></div>
+      <div class="overlay p1-name"><span class="markable" data-mark-key="applicant-name-p1" data-mark-label="Nama pemohon halaman 1" id="outP1Name"></span></div>
+    </div>
+
+    <div class="page" id="page2" data-page-label="Halaman 2">
+      <img class="page-image" src="assets/template-page-2.png?v=26" alt="Halaman 2 formulir MCU">
+      <svg class="tablegrid page2-grid" viewBox="0 0 1407 1997" preserveAspectRatio="none" aria-hidden="true"><line class="eraser" x1="63.0" y1="364.0" x2="1356.0" y2="364.0" /><line class="eraser" x1="603.0" y1="467.0" x2="1356.0" y2="467.0" /><line class="eraser" x1="63.0" y1="586.0" x2="1356.0" y2="586.0" /><line class="eraser" x1="713.0" y1="669.0" x2="1356.0" y2="669.0" /><line class="eraser" x1="862.0" y1="772.5" x2="1356.0" y2="772.5" /><line class="eraser" x1="63.0" y1="848.0" x2="1356.0" y2="848.0" /><line class="eraser" x1="862.0" y1="903.5" x2="1356.0" y2="903.5" /><line class="eraser" x1="862.0" y1="961.0" x2="1356.0" y2="961.0" /><line class="eraser" x1="63.0" y1="1028.0" x2="1356.0" y2="1028.0" /><line class="eraser" x1="862.0" y1="1151.5" x2="1356.0" y2="1151.5" /><line class="eraser" x1="862.0" y1="1234.0" x2="1356.0" y2="1234.0" /><line class="eraser" x1="63.0" y1="1319.0" x2="1356.0" y2="1319.0" /><line class="eraser" x1="713.0" y1="1439.5" x2="1356.0" y2="1439.5" /><line class="eraser" x1="862.0" y1="1524.0" x2="1356.0" y2="1524.0" /><line class="eraser" x1="63.0" y1="1573.5" x2="715.0" y2="1573.5" /><line class="eraser" x1="63.0" y1="1656.0" x2="1356.0" y2="1656.0" /><line class="eraser" x1="713.0" y1="1809.0" x2="1356.0" y2="1809.0" /><line class="eraser" x1="63.0" y1="1896.5" x2="1356.0" y2="1896.5" /><line class="eraser" x1="63.0" y1="364.0" x2="63.0" y2="1898.0" /><line class="eraser" x1="307.0" y1="364.0" x2="307.0" y2="1898.0" /><line class="eraser" x1="603.0" y1="364.0" x2="603.0" y2="588.0" /><line class="eraser" x1="713.0" y1="586.0" x2="713.0" y2="1898.0" /><line class="eraser" x1="772.5" y1="364.0" x2="772.5" y2="588.0" /><line class="eraser" x1="862.0" y1="669.0" x2="862.0" y2="1321.0" /><line class="eraser" x1="862.0" y1="1440.0" x2="862.0" y2="1658.0" /><line class="eraser" x1="939.0" y1="1656.0" x2="939.0" y2="1898.0" /><line class="eraser" x1="975.0" y1="364.0" x2="975.0" y2="588.0" /><line class="eraser" x1="1127.0" y1="364.0" x2="1127.0" y2="588.0" /><line class="eraser" x1="1189.0" y1="586.0" x2="1189.0" y2="1658.0" /><line class="eraser" x1="1354.0" y1="364.0" x2="1354.0" y2="1898.0" /><line class="ink" x1="63.0" y1="364.0" x2="1356.0" y2="364.0" /><line class="ink" x1="603.0" y1="467.0" x2="1356.0" y2="467.0" /><line class="ink" x1="63.0" y1="586.0" x2="1356.0" y2="586.0" /><line class="ink" x1="713.0" y1="669.0" x2="1356.0" y2="669.0" /><line class="ink" x1="862.0" y1="772.5" x2="1356.0" y2="772.5" /><line class="ink" x1="63.0" y1="848.0" x2="1356.0" y2="848.0" /><line class="ink" x1="862.0" y1="903.5" x2="1356.0" y2="903.5" /><line class="ink" x1="862.0" y1="961.0" x2="1356.0" y2="961.0" /><line class="ink" x1="63.0" y1="1028.0" x2="1356.0" y2="1028.0" /><line class="ink" x1="862.0" y1="1151.5" x2="1356.0" y2="1151.5" /><line class="ink" x1="862.0" y1="1234.0" x2="1356.0" y2="1234.0" /><line class="ink" x1="63.0" y1="1319.0" x2="1356.0" y2="1319.0" /><line class="ink" x1="713.0" y1="1439.5" x2="1356.0" y2="1439.5" /><line class="ink" x1="862.0" y1="1524.0" x2="1356.0" y2="1524.0" /><line class="ink" x1="63.0" y1="1573.5" x2="715.0" y2="1573.5" /><line class="ink" x1="63.0" y1="1656.0" x2="1356.0" y2="1656.0" /><line class="ink" x1="713.0" y1="1809.0" x2="1356.0" y2="1809.0" /><line class="ink" x1="63.0" y1="1896.5" x2="1356.0" y2="1896.5" /><line class="ink" x1="63.0" y1="364.0" x2="63.0" y2="1898.0" /><line class="ink" x1="307.0" y1="364.0" x2="307.0" y2="1898.0" /><line class="ink" x1="603.0" y1="364.0" x2="603.0" y2="588.0" /><line class="ink" x1="713.0" y1="586.0" x2="713.0" y2="1898.0" /><line class="ink" x1="772.5" y1="364.0" x2="772.5" y2="588.0" /><line class="ink" x1="862.0" y1="669.0" x2="862.0" y2="1321.0" /><line class="ink" x1="862.0" y1="1440.0" x2="862.0" y2="1658.0" /><line class="ink" x1="939.0" y1="1656.0" x2="939.0" y2="1898.0" /><line class="ink" x1="975.0" y1="364.0" x2="975.0" y2="588.0" /><line class="ink" x1="1127.0" y1="364.0" x2="1127.0" y2="588.0" /><line class="ink" x1="1189.0" y1="586.0" x2="1189.0" y2="1658.0" /><line class="ink" x1="1354.0" y1="364.0" x2="1354.0" y2="1898.0" /></svg>
+      <div class="overlay p2-name"><span class="markable" data-mark-key="name" data-mark-label="Nama" id="outName"></span></div>
+      <div class="overlay p2-birth"><span class="markable block" data-mark-key="birth-date" data-mark-label="Tanggal lahir" id="outBirth"></span></div>
+      <div class="overlay p2-gender"><div id="outGender"></div></div>
+      <div class="overlay p2-exam-date"><span class="markable block" data-mark-key="exam-date" data-mark-label="Tanggal periksa" id="outExamDate"></span></div>
+      <div class="overlay p2-age"><span class="markable block" data-mark-key="age" data-mark-label="Usia" id="outAge"></span></div>
+      <div class="overlay p2-work"><span class="markable block" data-mark-key="work-history" data-mark-label="Riwayat kerja" id="outWork"></span></div>
+      <div class="overlay p2-bp"><span class="markable" data-mark-key="blood-pressure" data-mark-label="Tekanan darah" id="outBp"></span></div>
+      <div class="overlay p2-hb"><span class="markable" data-mark-key="hb" data-mark-label="Hemoglobin" id="outHb"></span></div>
+      <div class="overlay p2-rbc"><span class="markable" data-mark-key="rbc" data-mark-label="Sel darah merah" id="outRbc"></span></div>
+      <div class="overlay p2-history"><span class="markable block" data-mark-key="past-history" data-mark-label="Riwayat sebelumnya" id="outHistory"></span></div>
+      <div class="overlay p2-got"><span class="markable" data-mark-key="got" data-mark-label="GOT" id="outGot"></span></div>
+      <div class="overlay p2-gpt"><span class="markable" data-mark-key="gpt" data-mark-label="GPT" id="outGpt"></span></div>
+      <div class="overlay p2-ggtp"><span class="markable" data-mark-key="ggtp" data-mark-label="Gamma GTP" id="outGgtp"></span></div>
+      <div class="overlay p2-subjective"><span class="markable block" data-mark-key="subjective" data-mark-label="Gejala subjektif" id="outSubjective"></span></div>
+      <div class="overlay p2-ldl"><span class="markable" data-mark-key="ldl" data-mark-label="LDL" id="outLdl"></span></div>
+      <div class="overlay p2-hdl"><span class="markable" data-mark-key="hdl" data-mark-label="HDL" id="outHdl"></span></div>
+      <div class="overlay p2-trig"><span class="markable" data-mark-key="trig" data-mark-label="Trigliserida" id="outTrig"></span></div>
+      <div class="overlay p2-objective"><span class="markable block" data-mark-key="objective" data-mark-label="Gejala objektif" id="outObjective"></span></div>
+      <div class="overlay p2-glucose"><span class="markable" data-mark-key="glucose" data-mark-label="Gula darah" id="outGlucose"></span></div>
+      <div class="overlay p2-urine-glucose"><span class="markable block" data-mark-key="urine-glucose" data-mark-label="Glukosa urine" id="outUrineGlucose"></span></div>
+      <div class="overlay p2-urine-protein"><span class="markable block" data-mark-key="urine-protein" data-mark-label="Protein urine" id="outUrineProtein"></span></div>
+      <div class="overlay p2-height"><span class="markable" data-mark-key="height" data-mark-label="Tinggi badan" id="outHeight"></span></div>
+      <div class="overlay p2-weight"><span class="markable" data-mark-key="weight" data-mark-label="Berat badan" id="outWeight"></span></div>
+      <div class="overlay p2-ekg"><span class="markable block" data-mark-key="ekg" data-mark-label="Hasil EKG" id="outEkg"></span></div>
+      <div class="overlay p2-other"><span class="markable block" data-mark-key="other-test" data-mark-label="Pemeriksaan lainnya" id="outOther"></span></div>
+    </div>
+
+    <div class="page" id="page3" data-page-label="Halaman 3">
+      <img class="page-image" src="assets/template-page-3-note-html-v40.png?v=40" alt="Halaman 3 formulir MCU">
+      <svg class="tablegrid page3-grid" viewBox="0 0 1407 1997" preserveAspectRatio="none" aria-hidden="true"><line class="eraser" x1="64.0" y1="127.0" x2="1357.0" y2="127.0" /><line class="eraser" x1="64.0" y1="212.0" x2="1357.0" y2="212.0" /><line class="eraser" x1="64.0" y1="296.5" x2="715.0" y2="296.5" /><line class="eraser" x1="166.0" y1="378.0" x2="715.0" y2="378.0" /><line class="eraser" x1="64.0" y1="463.0" x2="715.0" y2="463.0" /><line class="eraser" x1="166.0" y1="615.0" x2="715.0" y2="615.0" /><line class="eraser" x1="713.0" y1="630.0" x2="1357.0" y2="630.0" /><line class="eraser" x1="64.0" y1="752.0" x2="715.0" y2="752.0" /><line class="eraser" x1="713.0" y1="787.0" x2="1357.0" y2="787.0" /><line class="eraser" x1="64.0" y1="127.0" x2="64.0" y2="988.0" /><line class="eraser" x1="166.0" y1="297.0" x2="166.0" y2="988.0" /><line class="eraser" x1="307.0" y1="127.0" x2="307.0" y2="988.0" /><line class="eraser" x1="713.0" y1="127.0" x2="713.0" y2="988.0" /><line class="eraser" x1="1355.0" y1="127.0" x2="1355.0" y2="988.0" /><line class="ink" x1="64.0" y1="127.0" x2="1357.0" y2="127.0" /><line class="ink" x1="64.0" y1="212.0" x2="1357.0" y2="212.0" /><line class="ink" x1="64.0" y1="296.5" x2="715.0" y2="296.5" /><line class="ink" x1="166.0" y1="378.0" x2="715.0" y2="378.0" /><line class="ink" x1="64.0" y1="463.0" x2="715.0" y2="463.0" /><line class="ink" x1="166.0" y1="615.0" x2="715.0" y2="615.0" /><line class="ink" x1="713.0" y1="630.0" x2="1357.0" y2="630.0" /><line class="ink" x1="64.0" y1="752.0" x2="715.0" y2="752.0" /><line class="ink" x1="713.0" y1="787.0" x2="1357.0" y2="787.0" /><line class="ink" x1="64.0" y1="988.0" x2="1357.0" y2="988.0" /><line class="ink" x1="64.0" y1="127.0" x2="64.0" y2="988.0" /><line class="ink" x1="166.0" y1="297.0" x2="166.0" y2="988.0" /><line class="ink" x1="307.0" y1="127.0" x2="307.0" y2="988.0" /><line class="ink" x1="713.0" y1="127.0" x2="713.0" y2="988.0" /><line class="ink" x1="1355.0" y1="127.0" x2="1355.0" y2="988.0" /></svg>
+      <div class="p3-note-first-html" aria-label="Catatan pertama BMI Jepang">
+        <div class="p3-note-first-label">（注意）</div>
+        <div class="p3-note-first-row">
+          <span class="p3-note-first-no">1</span>
+          <span class="p3-note-first-text">ＢＭＩは、次の算式により算出すること。</span>
+          <span class="p3-note-first-formula"><i>BMI</i><span class="eq">=</span><span class="fraction"><span class="numerator">体重（kg）</span><span class="denominator">身長（m）<sup>2</sup></span></span></span>
+        </div>
+      </div>
+      <div class="overlay p3-bmi"><span class="markable" data-mark-key="bmi" data-mark-label="BMI" id="outBmi"></span></div>
+      <div class="overlay p3-waist"><span class="markable" data-mark-key="waist" data-mark-label="Lingkar perut" id="outWaist"></span></div>
+      <div class="overlay p3-vision-r"><span class="markable" data-mark-key="vision-right" data-mark-label="Daya pandang kanan" id="outVisionR"></span></div>
+      <div class="overlay p3-vision-l"><span class="markable" data-mark-key="vision-left" data-mark-label="Daya pandang kiri" id="outVisionL"></span></div>
+      <div class="overlay p3-hearing-r"><div class="hearing-value" id="outHearingR"></div></div>
+      <div class="overlay p3-hearing-l"><div class="hearing-value" id="outHearingL"></div></div>
+      <div class="overlay p3-xray"><div class="xray-value" id="outXray"></div></div>
+      <div class="overlay p3-diagnosis"><div class="diagnosis-value" id="outDiagnosis"></div></div>
+      <div class="overlay p3-notes"><span class="markable block" data-mark-key="notes" data-mark-label="Keterangan" id="outNotes"></span></div>
+      <div class="overlay p3-footer-date"><div id="outFooterDate"></div></div>
+      <div class="overlay p3-stamp"><img id="outStamp" alt="Cap dan tanda tangan dokter"><div class="doctor-name" id="outDoctorName"></div></div>
+    </div>
+  </main>
+</div>
+<script src="assets/app.js?v=60"></script>
+<script src="assets/ui.js?v=50"></script>
+<script src="assets/scan.js?v=50"></script>
+<script src="assets/responsive.js?v=50"></script>
+</body>
+</html>
