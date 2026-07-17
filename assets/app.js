@@ -185,16 +185,9 @@ function render(){
   setHTML('outHearingL',hearingMarkup('l',d.telingaKiri1000,d.telingaKiri4000));
   const direct=d.rontgenMetode!=='Tidak langsung';
   setHTML('outXray',`<div class="xray-methods"><div>${markSpan('xray-direct-jp','Metode langsung Jepang','直接')}<br>${markSpan('xray-direct-id','Metode langsung','Langsung')}</div><div>${markSpan('xray-indirect-jp','Metode tidak langsung Jepang','間接')}<br>${markSpan('xray-indirect-id','Metode tidak langsung','Tidak langsung')}</div></div><div class="xray-row"><span>撮影</span><span>${esc(dateJP(d.rontgenTanggal))}</span></div><div class="xray-row"><span>Diambil tanggal</span><span>${esc(dateDash(d.rontgenTanggal))}</span></div><div class="xray-row"><span>No.</span><span>${esc(d.rontgenNo||'')}</span></div><div class="xray-findings">所見：${esc(d.rontgenTemuanJp||'')}\nTemuan: ${esc(d.rontgenTemuanId||'')}</div>`);
-  setHTML('outDiagnosis',`<div class="diagnosis-text">${markSpan('diagnosis','Diagnosis dokter',bilingual(d.diagnosisId,d.diagnosisJp,' / '),'block')}</div><div class="fit-row"><div class="fit-label">判定<br><b>Diagnosis:</b></div><div class="fit-choice"><span class="markable fit-combined" data-mark-key="fit" data-mark-label="FIT">合<br>FIT</span></div><div class="fit-choice"><span class="markable fit-combined" data-mark-key="unfit" data-mark-label="UNFIT">否<br>UNFIT</span></div></div><div class="fit-note">※ 日本での就業に問題なし</div>`);
+  setHTML('outDiagnosis',`<div class="diagnosis-text">${markSpan('diagnosis','Diagnosis dokter',bilingual(d.diagnosisId,d.diagnosisJp,' / '),'block')}</div>`);
   setText('outNotes',bilingual(d.keteranganId,d.keteranganJp,' / '));
-  setHTML('outFooterDate',`<div class="footer-date-line jp-line">${esc(dateJP(d.tglDokumen))}</div><div class="footer-date-line latin-line">${esc(dateID(d.tglDokumen))}</div>`);
-  const stamp=el('outStamp');
-  if(state.stampData){
-    stamp.src=state.stampData; stamp.classList.add('visible'); setText('outDoctorName','');
-  }else{
-    stamp.removeAttribute('src'); stamp.classList.remove('visible');
-    setText('outDoctorName',[d.klinikNama,d.dokterNama?`(${d.dokterNama})`:''].filter(Boolean).join('\n'));
-  }
+  setHTML('outFooterDate',`<div class="footer-date-line jp-line">作成年月日　　　　${esc(dateJP(d.tglDokumen))}</div><div class="footer-date-line latin-line">Tanggal pembuatan:　${esc(dateIDWide(d.tglDokumen))}</div>`);
 
   updateAutomaticMarks(d); applyMarks();
 }
@@ -355,7 +348,10 @@ function modifySelectedMark(action){
 
 document.addEventListener('input',event=>{if(event.target.matches('[data-field]'))render()});
 document.addEventListener('change',event=>{if(event.target.matches('[data-field]'))render()});
-document.addEventListener('click',event=>{const mark=event.target.closest('.markable');if(mark){event.preventDefault();selectMark(mark)}});
+document.addEventListener('click',event=>{
+  const mark=event.target.closest('.markable');
+  if(mark){event.preventDefault();selectMark(mark)}
+});
 el('btnSave').addEventListener('click',saveCurrent); el('btnLoad').addEventListener('click',loadCurrent); el('btnDelete').addEventListener('click',deleteCurrent); el('btnNew').addEventListener('click',newRecord); el('btnSample').addEventListener('click',useSample); el('btnPrint').addEventListener('click',()=>window.print()); el('btnExportWord').addEventListener('click',exportWord);
 el('btnStrike').addEventListener('click',()=>modifySelectedMark('strike')); el('btnCircle').addEventListener('click',()=>modifySelectedMark('circle')); el('btnClearMark').addEventListener('click',()=>modifySelectedMark('clear'));
 el('dokterStamp').addEventListener('change',async event=>{const file=event.target.files?.[0];if(!file)return;try{state.stampData=await resizeImage(file);render();showStatus('Gambar cap dimuat.')}catch{showStatus('Gagal membaca gambar cap.')}});

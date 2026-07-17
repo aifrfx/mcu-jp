@@ -7,7 +7,7 @@ const PizZip = require('pizzip');
 const Docxtemplater = require('docxtemplater');
 
 const ROOT = __dirname;
-const TEMPLATE_DOCX = path.join(ROOT, 'source', 'template-bonto.docx');
+const TEMPLATE_DOCX = path.join(ROOT, 'source', 'template-word-terbaru.docx');
 const RETRYABLE_STATUS = new Set([404, 429, 500, 502, 503, 504]);
 const DEFAULT_PRIMARY_MODEL = 'gemini-3.5-flash';
 const DEFAULT_FALLBACK_MODELS = ['gemini-3.1-flash-lite', 'gemini-2.5-flash-lite'];
@@ -221,9 +221,9 @@ function buildTemplateData(data) {
     bp: value(data, 'tekananDarah') ? `${value(data, 'tekananDarah')} mm/Hg` : '',
     hb: value(data, 'hb') ? `${value(data, 'hb')} g/dℓ` : '',
     rbc: value(data, 'rbc') ? `${value(data, 'rbc')} 万/mm³` : '',
-    got: value(data, 'got') ? `${value(data, 'got')} IU/ℓ` : '',
-    gpt: value(data, 'gpt') ? `${value(data, 'gpt')} IU/ℓ` : '',
-    ggtp: value(data, 'ggtp') ? `${value(data, 'ggtp')} IU/ℓ` : '',
+    got: value(data, 'got') ? `${value(data, 'got')} μ/ℓ` : '',
+    gpt: value(data, 'gpt') ? `${value(data, 'gpt')} μ/ℓ` : '',
+    ggtp: value(data, 'ggtp') ? `${value(data, 'ggtp')} μ/ℓ` : '',
     ldl: value(data, 'ldl') ? `${value(data, 'ldl')} mg/dℓ` : '',
     hdl: value(data, 'hdl') ? `${value(data, 'hdl')} mg/dℓ` : '',
     trig: value(data, 'trigliserida') ? `${value(data, 'trigliserida')} mg/dℓ` : '',
@@ -253,7 +253,7 @@ function buildTemplateData(data) {
 }
 
 function buildWordDocument(data) {
-  if (!fs.existsSync(TEMPLATE_DOCX)) throw new Error('Template Word Bonto tidak ditemukan di folder source.');
+  if (!fs.existsSync(TEMPLATE_DOCX)) throw new Error('Template Word terbaru tidak ditemukan di folder source.');
   const templateBuffer = fs.readFileSync(TEMPLATE_DOCX);
   const zip = new PizZip(templateBuffer);
   const doc = new Docxtemplater(zip, {
@@ -284,17 +284,156 @@ app.get('/api/gemini-config', (req, res) => {
   });
 });
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function toJsonSchema(value) {
+  if (Array.isArray(value)) return value.map(toJsonSchema);
+  if (!value || typeof value !== 'object') return value;
+  const result = {};
+  for (const [key, item] of Object.entries(value)) {
+    if (key === 'type' && typeof item === 'string') {
+      const map = {
+        OBJECT: 'object', ARRAY: 'array', STRING: 'string', BOOLEAN: 'boolean',
+        NUMBER: 'number', INTEGER: 'integer', NULL: 'null',
+      };
+      result[key] = map[item.toUpperCase()] || item.toLowerCase();
+    } else {
+      result[key] = toJsonSchema(item);
+    }
+  }
+  return result;
+}
+
+function normalizeGeminiRequest(requestBody) {
+  const request = JSON.parse(JSON.stringify(requestBody || {}));
+  const config = request.generationConfig && typeof request.generationConfig === 'object'
+    ? request.generationConfig
+    : {};
+
+  const schema = config.responseFormat?.text?.schema
+    || config.responseJsonSchema
+    || config.responseSchema
+    || null;
+
+  delete config.responseMimeType;
+  delete config.responseSchema;
+  delete config.responseJsonSchema;
+  delete config.temperature;
+
+  config.maxOutputTokens = Math.max(Number(config.maxOutputTokens) || 0, 16384);
+  if (schema) {
+    config.responseFormat = {
+      text: {
+        mimeType: 'application/json',
+        schema: toJsonSchema(schema),
+      },
+    };
+  } else {
+    config.responseFormat = {
+      text: { mimeType: 'application/json' },
+    };
+  }
+  request.generationConfig = config;
+  return request;
+}
+
+function makeCompatibilityRequest(requestBody) {
+  const request = JSON.parse(JSON.stringify(requestBody || {}));
+  const config = request.generationConfig && typeof request.generationConfig === 'object'
+    ? request.generationConfig
+    : {};
+  const schema = config.responseFormat?.text?.schema
+    || config.responseJsonSchema
+    || config.responseSchema
+    || null;
+  const fields = schema?.properties?.data?.properties
+    ? Object.keys(schema.properties.data.properties)
+    : [];
+
+  delete config.responseFormat;
+  delete config.responseSchema;
+  delete config.responseJsonSchema;
+  delete config.temperature;
+  config.responseMimeType = 'application/json';
+  config.maxOutputTokens = Math.max(Number(config.maxOutputTokens) || 0, 16384);
+  request.generationConfig = config;
+
+  if (fields.length && Array.isArray(request.contents)) {
+    const suffix = `\n\nKeluarkan JSON dengan bentuk {"data":{...},"warnings":[]} dan gunakan hanya field berikut bila nilainya terlihat: ${fields.join(', ')}.`;
+    const content = request.contents[0];
+    if (content && Array.isArray(content.parts)) {
+      const promptPart = [...content.parts].reverse().find((part) => typeof part?.text === 'string');
+      if (promptPart) promptPart.text += suffix;
+      else content.parts.push({ text: suffix });
+    }
+  }
+  return request;
+}
+
+function extractGeminiText(payload) {
+  if (!payload || typeof payload !== 'object') return '';
+  if (typeof payload.output_text === 'string' && payload.output_text.trim()) return payload.output_text.trim();
+  if (typeof payload.text === 'string' && payload.text.trim()) return payload.text.trim();
+  const candidates = Array.isArray(payload.candidates) ? payload.candidates : [];
+  return candidates
+    .flatMap((candidate) => Array.isArray(candidate?.content?.parts) ? candidate.content.parts : [])
+    .map((part) => typeof part?.text === 'string' ? part.text : '')
+    .join('')
+    .trim();
+}
+
+function describeEmptyGeminiResponse(payload) {
+  const promptBlock = payload?.promptFeedback?.blockReason;
+  const candidate = Array.isArray(payload?.candidates) ? payload.candidates[0] : null;
+  const finishReason = candidate?.finishReason;
+  const safety = Array.isArray(candidate?.safetyRatings)
+    ? candidate.safetyRatings.filter((item) => item?.blocked).map((item) => item.category).join(', ')
+    : '';
+  const details = [];
+  if (promptBlock) details.push(`prompt diblokir: ${promptBlock}`);
+  if (finishReason) details.push(`finishReason: ${finishReason}`);
+  if (safety) details.push(`safety: ${safety}`);
+  if (payload?.modelStatus?.message) details.push(`modelStatus: ${payload.modelStatus.message}`);
+  return details.length ? details.join('; ') : 'respons HTTP 200 tidak berisi teks kandidat';
+}
+
+async function callGeminiModel(model, apiKey, requestBody, mode, retryIndex = 0) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/${GEMINI_API_VERSION}/models/${model}:generateContent`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey,
+        },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+      }
+    );
+    const responseText = await response.text();
+    let parsed = null;
+    try { parsed = JSON.parse(responseText); } catch { parsed = null; }
+    return { response, responseText, parsed, mode, retryIndex };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 app.post('/api/gemini', async (req, res) => {
   try {
-    const requestBody = req.body && req.body.request;
-    if (!requestBody || typeof requestBody !== 'object' || Array.isArray(requestBody)) {
+    const rawRequest = req.body && req.body.request;
+    if (!rawRequest || typeof rawRequest !== 'object' || Array.isArray(rawRequest)) {
       throw new Error('Body permintaan Gemini tidak valid.');
     }
 
     const cfg = loadRuntimeConfig();
     if (!cfg.apiKey) throw new Error('GEMINI_API_KEY belum diatur pada Railway Variables.');
 
-    // Model dari browser sengaja diabaikan. Urutan hanya berasal dari Environment Bonto.
     const models = normalizeModelList(cfg.primaryModel, cfg.fallbackModels);
     if (!models.length) throw new Error('Model Gemini belum diatur.');
 
@@ -303,73 +442,80 @@ app.post('/api/gemini', async (req, res) => {
     let finalError = 'Gemini tidak merespons.';
 
     for (const model of models) {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
-      let response;
-      let responseText = '';
+      const requestVariants = [
+        { mode: 'structured', body: normalizeGeminiRequest(rawRequest) },
+        { mode: 'json-compat', body: makeCompatibilityRequest(rawRequest) },
+      ];
 
-      try {
-        response = await fetch(
-          `https://generativelanguage.googleapis.com/${GEMINI_API_VERSION}/models/${model}:generateContent`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-goog-api-key': cfg.apiKey,
-            },
-            body: JSON.stringify(requestBody),
-            signal: controller.signal,
+      for (const variant of requestVariants) {
+        const maxRetries = variant.mode === 'structured' ? 2 : 1;
+        for (let retryIndex = 0; retryIndex < maxRetries; retryIndex += 1) {
+          if (retryIndex > 0) await sleep(1200 * (2 ** (retryIndex - 1)) + Math.floor(Math.random() * 350));
+          let result;
+          try {
+            result = await callGeminiModel(model, cfg.apiKey, variant.body, variant.mode, retryIndex);
+          } catch (error) {
+            const message = error && error.name === 'AbortError'
+              ? `Timeout setelah ${Math.round(GEMINI_TIMEOUT_MS / 1000)} detik.`
+              : (error.message || String(error));
+            attempts.push({ model, mode: variant.mode, retry: retryIndex + 1, status: 0, message });
+            finalStatus = 504;
+            finalError = `${model}: ${message}`;
+            console.error('[Gemini]', model, variant.mode, message);
+            continue;
           }
-        );
-        responseText = await response.text();
-      } catch (error) {
-        clearTimeout(timeout);
-        const message = error && error.name === 'AbortError'
-          ? `Timeout setelah ${Math.round(GEMINI_TIMEOUT_MS / 1000)} detik.`
-          : (error.message || String(error));
-        attempts.push({ model, status: 0, message });
-        finalStatus = 504;
-        finalError = `${model}: ${message}`;
-        console.error('[Gemini]', model, message);
-        continue;
-      } finally {
-        clearTimeout(timeout);
+
+          const { response, responseText, parsed } = result;
+          const apiMessage = parsed?.error?.message || response.statusText || `HTTP ${response.status}`;
+
+          if (response.ok) {
+            const generatedText = extractGeminiText(parsed);
+            if (generatedText) {
+              attempts.push({ model, mode: variant.mode, retry: retryIndex + 1, status: response.status, message: 'OK' });
+              console.log('[Gemini]', model, variant.mode, response.status, 'OK');
+              res.status(response.status);
+              res.set('Content-Type', response.headers.get('content-type') || 'application/json; charset=utf-8');
+              res.set('X-Gemini-Model-Used', model);
+              res.set('X-Gemini-Mode-Used', variant.mode);
+              res.set('X-Gemini-Attempts', JSON.stringify(attempts));
+              return res.send(responseText);
+            }
+
+            const emptyMessage = describeEmptyGeminiResponse(parsed);
+            attempts.push({ model, mode: variant.mode, retry: retryIndex + 1, status: 200, message: emptyMessage });
+            finalStatus = 502;
+            finalError = `${model}: ${emptyMessage}`;
+            console.warn('[Gemini empty]', model, variant.mode, JSON.stringify({
+              promptFeedback: parsed?.promptFeedback || null,
+              finishReason: parsed?.candidates?.[0]?.finishReason || null,
+              usageMetadata: parsed?.usageMetadata || null,
+            }));
+            break;
+          }
+
+          attempts.push({ model, mode: variant.mode, retry: retryIndex + 1, status: response.status, message: apiMessage });
+          finalStatus = response.status;
+          finalError = apiMessage;
+          console.log('[Gemini]', model, variant.mode, response.status, apiMessage.slice(0, 260));
+
+          if ([401, 403].includes(response.status)) break;
+          if (response.status === 400 && !/schema|responseformat|model|not found|unsupported/i.test(apiMessage)) break;
+          if (![408, 429, 500, 502, 503, 504].includes(response.status)) break;
+        }
+
+        if ([401, 403].includes(finalStatus)) break;
       }
 
-      let parsed = null;
-      try { parsed = JSON.parse(responseText); } catch { parsed = null; }
-      const message = parsed?.error?.message || response.statusText || `HTTP ${response.status}`;
-      attempts.push({ model, status: response.status, message });
-      console.log('[Gemini]', model, response.status, message.slice(0, 220));
-
-      if (response.ok) {
-        res.status(response.status);
-        res.set('Content-Type', response.headers.get('content-type') || 'application/json; charset=utf-8');
-        res.set('X-Gemini-Model-Used', model);
-        res.set('X-Gemini-Attempts', JSON.stringify(attempts));
-        return res.send(responseText);
-      }
-
-      finalStatus = response.status;
-      finalError = message;
-
-      // Auth/request yang sama tidak akan sembuh hanya dengan mengganti model.
-      if ([401, 403].includes(response.status)) break;
-      if (response.status === 400 && !/model|not found|unsupported/i.test(message)) break;
-
-      // 404, 429, timeout, dan error server mencoba model fallback berikutnya.
-      if (!RETRYABLE_STATUS.has(response.status) && response.status !== 400) break;
+      if ([401, 403].includes(finalStatus)) break;
     }
 
     const any429 = attempts.some((item) => item.status === 429);
     const any404 = attempts.some((item) => item.status === 404);
     const status = any429 ? 429 : finalStatus;
     let advice = '';
-    if (any429) {
-      advice = 'Semua model yang dicoba terkena batas kuota/rate limit. Periksa quota project di Google AI Studio atau aktifkan billing.';
-    } else if (any404) {
-      advice = 'Satu atau lebih model tidak tersedia. Perbarui GEMINI_PRIMARY_MODEL dan GEMINI_FALLBACK_MODELS.';
-    }
+    if (any429) advice = 'Kuota atau rate limit terkena batas. Tunggu lalu coba kembali, kurangi ukuran PDF, atau periksa quota project.';
+    else if (any404) advice = 'Satu atau lebih nama model tidak tersedia. Periksa Variables Railway.';
+    else if (attempts.some((item) => item.status === 200)) advice = 'Gemini merespons tanpa teks. Detail finishReason sudah dicatat di Railway Logs.';
 
     res.status(status || 502);
     res.set('Content-Type', 'application/json; charset=utf-8');

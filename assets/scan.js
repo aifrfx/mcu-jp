@@ -436,7 +436,7 @@
       if(!res.ok) throw new Error('Gagal membaca konfigurasi Gemini.');
       geminiRuntime.config=await res.json();
     }catch{
-      geminiRuntime.config={hasApiKey:false,primaryModel:'gemini-2.5-flash',fallbackModels:['gemini-2.5-flash-lite','gemini-2.0-flash'],allowBrowserOverride:false};
+      geminiRuntime.config={hasApiKey:false,primaryModel:'gemini-3.5-flash',fallbackModels:['gemini-3.1-flash-lite','gemini-2.5-flash-lite'],allowBrowserOverride:false};
     }
     return geminiRuntime.config;
   }
@@ -459,8 +459,8 @@
     nama:'string',tglLahir:'string',jenisKelamin:'string',tglPeriksa:'string',tglDeklarasi:'string',riwayatKerjaId:'string',riwayatKerjaJp:'string',riwayatSakitId:'string',riwayatSakitJp:'string',gejalaSubId:'string',gejalaSubJp:'string',gejalaObjId:'string',gejalaObjJp:'string',tinggi:'string',berat:'string',lingkarPerut:'string',tekananDarah:'string',hb:'string',rbc:'string',got:'string',gpt:'string',ggtp:'string',ldl:'string',hdl:'string',trigliserida:'string',gulaDarah:'string',gulaDarahBintang:'boolean',glukosaUrine:'string',proteinUrine:'string',mataKanan:'string',mataKiri:'string',alatBantuMata:'boolean',telingaKanan1000:'string',telingaKanan4000:'string',telingaKiri1000:'string',telingaKiri4000:'string',ekgId:'string',ekgJp:'string',pemeriksaanLainId:'string',pemeriksaanLainJp:'string',rontgenMetode:'string',rontgenTanggal:'string',rontgenNo:'string',rontgenTemuanId:'string',rontgenTemuanJp:'string',diagnosisId:'string',diagnosisJp:'string',fitStatus:'string',keteranganId:'string',keteranganJp:'string',tglDokumen:'string',dokterNama:'string',klinikNama:'string'
   };
   function geminiSchema(){
-    const properties={}; Object.entries(GEMINI_FIELDS).forEach(([key,type])=>{properties[key]={type:type==='boolean'?'BOOLEAN':'STRING'}});
-    return {type:'OBJECT',properties:{data:{type:'OBJECT',properties},warnings:{type:'ARRAY',items:{type:'STRING'}}},required:['data']};
+    const properties={}; Object.entries(GEMINI_FIELDS).forEach(([key,type])=>{properties[key]={type:type==='boolean'?'boolean':'string'}});
+    return {type:'object',properties:{data:{type:'object',properties,additionalProperties:false},warnings:{type:'array',items:{type:'string'}}},required:['data'],additionalProperties:false};
   }
   const GEMINI_PROMPT=`Anda adalah sistem ekstraksi data formulir medical check-up Jepang/Indonesia. Analisis seluruh PDF atau gambar yang dilampirkan sebagai SATU peserta. Baca teks, tabel, tanda lingkaran/coretan, angka laboratorium, tulisan Jepang, dan posisi sel. Kembalikan hanya JSON sesuai schema.\n\nAturan ketat:\n1. Jangan menebak. Kosongkan atau hilangkan field yang tidak terlihat jelas.\n2. Tanggal wajib format YYYY-MM-DD.\n3. jenisKelamin hanya L atau P. fitStatus hanya FIT atau UNFIT.\n4. glukosaUrine dan proteinUrine hanya Negatif atau Positif.\n5. Pendengaran hanya Normal atau Gangguan.\n6. Nilai angka jangan diberi satuan. tekananDarah gunakan bentuk 130/80.\n7. Pisahkan teks Indonesia dan Jepang ke field masing-masing.\n8. tglDeklarasi adalah tanggal pada halaman surat pernyataan. tglDokumen adalah tanggal pembuatan pada halaman akhir.\n9. Untuk checkbox gulaDarahBintang dan alatBantuMata, isi boolean hanya jika dapat dipastikan.\n10. Masukkan keraguan atau konflik pada warnings.`;
   function mimeForFile(file){ if(file.type) return file.type; if(/\.pdf$/i.test(file.name)) return 'application/pdf'; if(/\.png$/i.test(file.name)) return 'image/png'; if(/\.webp$/i.test(file.name)) return 'image/webp'; return 'image/jpeg'; }
@@ -471,13 +471,20 @@
     const parts=[];
     for(const file of files){ parts.push({inline_data:{mime_type:mimeForFile(file),data:await fileToBase64(file)}}); }
     parts.push({text:GEMINI_PROMPT});
-    const request={contents:[{role:'user',parts}],generationConfig:{temperature:0,responseMimeType:'application/json',responseSchema:geminiSchema(),maxOutputTokens:8192}};
+    const request={contents:[{role:'user',parts}],generationConfig:{responseFormat:{text:{mimeType:'application/json',schema:geminiSchema()}},maxOutputTokens:16384}};
     const modelChain=[cfg.primaryModel,...(cfg.fallbackModels||[])].filter((v,i,a)=>v&&a.indexOf(v)===i);
     const response=await fetch('/api/gemini',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({modelChain,request})});
     const payload=await response.json().catch(()=>({}));
     if(!response.ok) throw new Error(payload.error?.message||payload.message||`Gemini API gagal (${response.status}).`);
-    const text=payload.candidates?.[0]?.content?.parts?.map(part=>part.text||'').join('')||'';
-    if(!text) throw new Error('Gemini tidak mengembalikan data.');
+    const text=(payload.output_text||payload.text||payload.candidates?.flatMap(candidate=>candidate?.content?.parts||[]).map(part=>part?.text||'').join('')||'').trim();
+    if(!text){
+      const block=payload.promptFeedback?.blockReason;
+      const finish=payload.candidates?.[0]?.finishReason;
+      const model=response.headers.get('X-Gemini-Model-Used');
+      const mode=response.headers.get('X-Gemini-Mode-Used');
+      const details=[model&&`model ${model}`,mode&&`mode ${mode}`,block&&`blok ${block}`,finish&&`finishReason ${finish}`].filter(Boolean).join(' • ');
+      throw new Error(`Gemini merespons tetapi tidak menghasilkan teks${details?` (${details})`:''}. Periksa Railway Logs.`);
+    }
     let parsed; try{parsed=JSON.parse(text)}catch{ throw new Error('Respons Gemini bukan JSON valid.'); }
     const data=parsed.data||parsed; const results=[];
     const usedModel=response.headers.get('X-Gemini-Model-Used');

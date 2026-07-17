@@ -1,3 +1,7 @@
+# MCU JP - Layout Word Final
+
+Output halaman 1-3 dan export DOCX telah dibangun ulang langsung dari dokumen Word final pengguna. Layout lama tidak digunakan lagi.
+
 # MCU Document Studio - Bonto Ready
 
 Versi Node.js untuk Bonto. Fitur utama:
