@@ -1,8 +1,8 @@
 {
-  "name": "mcu-jp-bonto",
+  "name": "mcu-jp-railway",
   "version": "1.0.0",
   "private": true,
-  "description": "MCU Document Studio untuk Bonto Node.js hosting",
+  "description": "MCU Document Studio untuk Railway Node.js hosting",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

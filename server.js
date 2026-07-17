@@ -9,8 +9,10 @@ const Docxtemplater = require('docxtemplater');
 const ROOT = __dirname;
 const TEMPLATE_DOCX = path.join(ROOT, 'source', 'template-bonto.docx');
 const RETRYABLE_STATUS = new Set([404, 429, 500, 502, 503, 504]);
-const DEFAULT_PRIMARY_MODEL = 'gemini-2.5-flash';
-const DEFAULT_FALLBACK_MODELS = ['gemini-2.5-flash-lite', 'gemini-2.0-flash'];
+const DEFAULT_PRIMARY_MODEL = 'gemini-3.5-flash';
+const DEFAULT_FALLBACK_MODELS = ['gemini-3.1-flash-lite', 'gemini-2.5-flash-lite'];
+const GEMINI_API_VERSION = String(process.env.GEMINI_API_VERSION || 'v1beta').trim() || 'v1beta';
+const GEMINI_TIMEOUT_MS = Math.max(30000, Number(process.env.GEMINI_TIMEOUT_MS || 210000));
 
 function normalizeModelList(...groups) {
   const result = [];
@@ -270,6 +272,8 @@ const app = express();
 app.disable('x-powered-by');
 app.use(express.json({ limit: '80mb' }));
 
+app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
+
 app.get('/api/gemini-config', (req, res) => {
   const cfg = loadRuntimeConfig();
   res.json({
@@ -286,41 +290,96 @@ app.post('/api/gemini', async (req, res) => {
     if (!requestBody || typeof requestBody !== 'object' || Array.isArray(requestBody)) {
       throw new Error('Body permintaan Gemini tidak valid.');
     }
+
     const cfg = loadRuntimeConfig();
-    if (!cfg.apiKey) throw new Error('GEMINI_API_KEY belum diatur pada Environment Bonto.');
+    if (!cfg.apiKey) throw new Error('GEMINI_API_KEY belum diatur pada Railway Variables.');
+
+    // Model dari browser sengaja diabaikan. Urutan hanya berasal dari Environment Bonto.
     const models = normalizeModelList(cfg.primaryModel, cfg.fallbackModels);
+    if (!models.length) throw new Error('Model Gemini belum diatur.');
+
     const attempts = [];
-    let finalStatus = 500;
-    let finalBody = Buffer.from(JSON.stringify({ error: { message: 'Gemini tidak merespons.' } }));
+    let finalStatus = 502;
+    let finalError = 'Gemini tidak merespons.';
 
     for (const model of models) {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': cfg.apiKey,
-        },
-        body: JSON.stringify(requestBody),
-      });
-      const body = Buffer.from(await response.arrayBuffer());
-      attempts.push({ model, status: response.status });
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+      let response;
+      let responseText = '';
+
+      try {
+        response = await fetch(
+          `https://generativelanguage.googleapis.com/${GEMINI_API_VERSION}/models/${model}:generateContent`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-goog-api-key': cfg.apiKey,
+            },
+            body: JSON.stringify(requestBody),
+            signal: controller.signal,
+          }
+        );
+        responseText = await response.text();
+      } catch (error) {
+        clearTimeout(timeout);
+        const message = error && error.name === 'AbortError'
+          ? `Timeout setelah ${Math.round(GEMINI_TIMEOUT_MS / 1000)} detik.`
+          : (error.message || String(error));
+        attempts.push({ model, status: 0, message });
+        finalStatus = 504;
+        finalError = `${model}: ${message}`;
+        console.error('[Gemini]', model, message);
+        continue;
+      } finally {
+        clearTimeout(timeout);
+      }
+
+      let parsed = null;
+      try { parsed = JSON.parse(responseText); } catch { parsed = null; }
+      const message = parsed?.error?.message || response.statusText || `HTTP ${response.status}`;
+      attempts.push({ model, status: response.status, message });
+      console.log('[Gemini]', model, response.status, message.slice(0, 220));
+
       if (response.ok) {
         res.status(response.status);
         res.set('Content-Type', response.headers.get('content-type') || 'application/json; charset=utf-8');
         res.set('X-Gemini-Model-Used', model);
         res.set('X-Gemini-Attempts', JSON.stringify(attempts));
-        return res.send(body);
+        return res.send(responseText);
       }
+
       finalStatus = response.status;
-      finalBody = body;
-      if ([400, 401, 403].includes(response.status)) break;
-      if (!RETRYABLE_STATUS.has(response.status)) break;
+      finalError = message;
+
+      // Auth/request yang sama tidak akan sembuh hanya dengan mengganti model.
+      if ([401, 403].includes(response.status)) break;
+      if (response.status === 400 && !/model|not found|unsupported/i.test(message)) break;
+
+      // 404, 429, timeout, dan error server mencoba model fallback berikutnya.
+      if (!RETRYABLE_STATUS.has(response.status) && response.status !== 400) break;
     }
 
-    res.status(finalStatus);
+    const any429 = attempts.some((item) => item.status === 429);
+    const any404 = attempts.some((item) => item.status === 404);
+    const status = any429 ? 429 : finalStatus;
+    let advice = '';
+    if (any429) {
+      advice = 'Semua model yang dicoba terkena batas kuota/rate limit. Periksa quota project di Google AI Studio atau aktifkan billing.';
+    } else if (any404) {
+      advice = 'Satu atau lebih model tidak tersedia. Perbarui GEMINI_PRIMARY_MODEL dan GEMINI_FALLBACK_MODELS.';
+    }
+
+    res.status(status || 502);
     res.set('Content-Type', 'application/json; charset=utf-8');
     res.set('X-Gemini-Attempts', JSON.stringify(attempts));
-    return res.send(finalBody);
+    return res.json({
+      error: {
+        message: `${finalError}${advice ? ` ${advice}` : ''}`,
+        attempts,
+      },
+    });
   } catch (error) {
     return res.status(400).json({ error: { message: error.message || 'Permintaan Gemini gagal.' } });
   }
@@ -353,5 +412,5 @@ app.get('*', (req, res) => res.sendFile(path.join(ROOT, 'index.html')));
 
 const port = Number.parseInt(process.env.PORT || '3000', 10);
 app.listen(port, '0.0.0.0', () => {
-  console.log(`MCU Bonto server listening on port ${port}`);
+  console.log(`MCU Railway server listening on port ${port}`);
 });
