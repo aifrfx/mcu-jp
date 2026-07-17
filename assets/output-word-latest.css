@@ -11,32 +11,32 @@
 .p1-date-id{left:39.2%!important;top:70.85%!important;width:55.8%!important;height:2.45%!important;font-size:10.7pt!important;justify-content:flex-start!important;text-align:left!important}
 .p1-name{left:68.8%!important;top:85.9%!important;width:22.3%!important;height:3.2%!important;font-size:11.2pt!important}
 
-/* Page 2 exact value cells */
-.p2-name{left:20.04%!important;top:18.28%!important;width:16.70%!important;height:8.66%!important;font-size:9.4pt!important}
-.p2-birth{left:49.40%!important;top:18.28%!important;width:19.20%!important;height:4.15%!important;font-size:8.35pt!important;line-height:1.08!important}
-.p2-gender{left:49.40%!important;top:22.63%!important;width:19.20%!important;height:4.16%!important;font-size:8.4pt!important;line-height:1.02!important}
-.p2-exam-date{left:80.25%!important;top:18.28%!important;width:14.74%!important;height:4.15%!important;font-size:8.25pt!important;line-height:1.08!important}
-.p2-age{left:80.25%!important;top:22.63%!important;width:14.74%!important;height:4.16%!important;font-size:8.55pt!important;line-height:1.06!important}
-.p2-work{left:20.04%!important;top:27.04%!important;width:23.02%!important;height:13.92%!important;font-size:9.0pt!important;line-height:1.16!important;padding:4px!important}
-.p2-bp{left:80.25%!important;top:27.04%!important;width:14.74%!important;height:4.05%!important;font-size:9.0pt!important}
-.p2-hb{left:80.25%!important;top:31.35%!important;width:14.74%!important;height:4.05%!important;font-size:9.0pt!important}
-.p2-rbc{left:80.25%!important;top:35.66%!important;width:14.74%!important;height:5.20%!important;font-size:9.0pt!important}
-.p2-history{left:20.04%!important;top:41.16%!important;width:23.02%!important;height:18.23%!important;font-size:8.85pt!important;line-height:1.16!important;padding:4px!important}
-.p2-got{left:80.25%!important;top:41.16%!important;width:14.74%!important;height:6.15%!important;font-size:8.9pt!important}
-.p2-gpt{left:80.25%!important;top:47.52%!important;width:14.74%!important;height:5.85%!important;font-size:8.9pt!important}
-.p2-ggtp{left:80.25%!important;top:53.58%!important;width:14.74%!important;height:5.80%!important;font-size:8.9pt!important}
-.p2-subjective{left:20.04%!important;top:59.59%!important;width:23.02%!important;height:12.07%!important;font-size:8.85pt!important;line-height:1.16!important;padding:4px!important}
-.p2-ldl{left:80.25%!important;top:59.59%!important;width:14.74%!important;height:5.05%!important;font-size:8.85pt!important}
-.p2-hdl{left:80.25%!important;top:64.80%!important;width:14.74%!important;height:3.30%!important;font-size:8.85pt!important}
-.p2-trig{left:80.25%!important;top:68.25%!important;width:14.74%!important;height:3.40%!important;font-size:8.85pt!important}
-.p2-objective{left:20.04%!important;top:71.86%!important;width:23.02%!important;height:10.46%!important;font-size:8.85pt!important;line-height:1.16!important;padding:4px!important}
-.p2-glucose{left:80.25%!important;top:71.86%!important;width:14.74%!important;height:4.90%!important;font-size:9.0pt!important;font-weight:700!important}
-.p2-urine-glucose{left:80.25%!important;top:76.92%!important;width:14.74%!important;height:3.45%!important;font-size:8.7pt!important;line-height:1.08!important}
-.p2-urine-protein{left:80.25%!important;top:80.47%!important;width:14.74%!important;height:5.35%!important;font-size:8.7pt!important;line-height:1.08!important}
-.p2-height{left:20.04%!important;top:82.52%!important;width:23.02%!important;height:3.30%!important;font-size:9.0pt!important}
-.p2-weight{left:20.04%!important;top:86.03%!important;width:23.02%!important;height:9.90%!important;font-size:9.1pt!important}
-.p2-ekg{left:62.55%!important;top:86.03%!important;width:32.35%!important;height:6.20%!important;font-size:8.4pt!important;line-height:1.10!important;padding:3px 5px!important}
-.p2-other{left:62.55%!important;top:92.44%!important;width:32.35%!important;height:3.40%!important;font-size:9.0pt!important;padding:2px!important}
+/* Page 2: exact value cells from the latest Word table */
+.p2-name{left:19.332%!important;top:18.227%!important;width:17.413%!important;height:9.614%!important;font-size:9.4pt!important}
+.p2-birth{left:49.467%!important;top:18.227%!important;width:19.261%!important;height:5.408%!important;font-size:8.5pt!important;line-height:1.10!important}
+.p2-gender{left:49.467%!important;top:23.686%!important;width:19.261%!important;height:4.156%!important;font-size:8.5pt!important;line-height:1.05!important}
+.p2-exam-date{left:80.242%!important;top:18.227%!important;width:14.854%!important;height:5.408%!important;font-size:8.25pt!important;line-height:1.10!important}
+.p2-age{left:80.242%!important;top:23.686%!important;width:14.854%!important;height:4.156%!important;font-size:8.6pt!important;line-height:1.08!important}
+.p2-work{left:19.332%!important;top:27.892%!important;width:23.810%!important;height:14.021%!important;font-size:9.0pt!important;line-height:1.18!important;padding:5px 8px!important}
+.p2-bp{left:80.242%!important;top:27.892%!important;width:14.854%!important;height:4.206%!important;font-size:9.0pt!important}
+.p2-hb{left:80.242%!important;top:32.148%!important;width:14.854%!important;height:4.307%!important;font-size:9.0pt!important}
+.p2-rbc{left:80.242%!important;top:36.505%!important;width:14.854%!important;height:5.408%!important;font-size:9.0pt!important}
+.p2-history{left:19.332%!important;top:41.963%!important;width:23.810%!important;height:13.821%!important;font-size:8.85pt!important;line-height:1.17!important;padding:5px 8px!important}
+.p2-got{left:80.242%!important;top:41.963%!important;width:14.854%!important;height:4.857%!important;font-size:8.9pt!important}
+.p2-gpt{left:80.242%!important;top:46.870%!important;width:14.854%!important;height:4.407%!important;font-size:8.9pt!important}
+.p2-ggtp{left:80.242%!important;top:51.327%!important;width:14.854%!important;height:4.457%!important;font-size:8.9pt!important}
+.p2-subjective{left:19.332%!important;top:55.834%!important;width:23.810%!important;height:10.316%!important;font-size:8.85pt!important;line-height:1.17!important;padding:5px 8px!important}
+.p2-ldl{left:80.242%!important;top:55.834%!important;width:14.854%!important;height:3.305%!important;font-size:8.75pt!important}
+.p2-hdl{left:80.242%!important;top:59.189%!important;width:14.854%!important;height:3.405%!important;font-size:8.75pt!important}
+.p2-trig{left:80.242%!important;top:62.644%!important;width:14.854%!important;height:3.505%!important;font-size:8.75pt!important}
+.p2-objective{left:19.332%!important;top:66.199%!important;width:23.810%!important;height:10.065%!important;font-size:8.85pt!important;line-height:1.17!important;padding:5px 8px!important}
+.p2-glucose{left:80.242%!important;top:66.199%!important;width:14.854%!important;height:4.457%!important;font-size:9.0pt!important;font-weight:700!important}
+.p2-urine-glucose{left:80.242%!important;top:70.706%!important;width:14.854%!important;height:3.455%!important;font-size:8.7pt!important;line-height:1.08!important}
+.p2-urine-protein{left:80.242%!important;top:74.211%!important;width:14.854%!important;height:5.508%!important;font-size:8.7pt!important;line-height:1.08!important}
+.p2-height{left:19.332%!important;top:76.315%!important;width:23.810%!important;height:3.405%!important;font-size:9.0pt!important}
+.p2-weight{left:19.332%!important;top:79.770%!important;width:23.810%!important;height:10.065%!important;font-size:9.1pt!important}
+.p2-ekg{left:63.539%!important;top:79.770%!important;width:31.557%!important;height:6.410%!important;font-size:8.45pt!important;line-height:1.11!important;padding:4px 7px!important}
+.p2-other{left:63.539%!important;top:86.229%!important;width:31.557%!important;height:3.605%!important;font-size:9.0pt!important;padding:2px 5px!important}
 
 /* Page 3 */
 .p3-bmi{left:20.90%!important;top:6.43%!important;width:29.63%!important;height:4.02%!important;font-size:9.4pt!important}
@@ -59,23 +59,7 @@
 @media print{.page .overlay{background:transparent!important}.page-image{z-index:1!important}.overlay{z-index:5!important}}
 
 
-/* ===== Label tabel diperbaiki tanpa menutup garis atau teks ===== */
-.p2-bp-label-fix,
-.p2-hb-label-fix{
-  position:absolute;
-  z-index:4;
-  box-sizing:border-box;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
-  background:transparent;
-  color:#111;
-  font-family:"Times New Roman","Yu Mincho","MS Mincho",serif;
-  pointer-events:none;
-  padding:2px 5px;
-}
+
 .p2-bp-label-fix{left:43.18%;top:27.10%;width:36.99%;height:4.05%;}
 .p2-bp-label-jp{
   width:100%;
